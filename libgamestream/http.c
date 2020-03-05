@@ -67,7 +67,7 @@ int http_request(const char* url, const char* ppkstr, PHTTP_DATA data) {
   if (!curl)
     return GS_FAILED;
 
-  curl_easy_setopt(curl, CURLOPT_VERBOSE, 1);
+  //curl_easy_setopt(curl, CURLOPT_VERBOSE, 1L);
   curl_easy_setopt(curl, CURLOPT_SSLENGINE_DEFAULT, 1L);
   curl_easy_setopt(curl, CURLOPT_SSLCERTTYPE,"PEM");
   curl_easy_setopt(curl, CURLOPT_SSLKEYTYPE, "PEM");
