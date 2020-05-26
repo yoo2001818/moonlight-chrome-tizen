@@ -4,6 +4,7 @@
 #include <cstring>
 #include <string>
 
+#include <emscripten.h>
 #include <emscripten/threading.h>
 
 void MoonlightInstance::ClStageStarting(int stage) {
@@ -11,7 +12,7 @@ void MoonlightInstance::ClStageStarting(int stage) {
            std::string(LiGetStageName(stage)) + std::string("..."));
 }
 
-void MoonlightInstance::ClStageFailed(int stage, long errorCode) {
+void MoonlightInstance::ClStageFailed(int stage, int errorCode) {
   PostToJs(std::string("DialogMsg: ") + std::string(LiGetStageName(stage)) +
            std::string(" failed (error ") + std::to_string(errorCode) +
            std::string(")"));
@@ -22,7 +23,7 @@ void MoonlightInstance::ClConnectionStarted(void) {
                                              onConnectionStarted);
 }
 
-void MoonlightInstance::ClConnectionTerminated(long errorCode) {
+void MoonlightInstance::ClConnectionTerminated(int errorCode) {
   // Teardown the connection
   LiStopConnection();
 
@@ -40,7 +41,7 @@ void MoonlightInstance::ClDisplayTransientMessage(const char* message) {
 
 void onConnectionStarted() { g_Instance->OnConnectionStarted(0); }
 
-void onConnectionStopped(long errorCode) {
+void onConnectionStopped(int errorCode) {
   g_Instance->OnConnectionStopped(errorCode);
 }
 
@@ -51,9 +52,7 @@ void MoonlightInstance::ClLogMessage(const char* format, ...) {
   vsnprintf(buf, sizeof(buf), format, va);
   va_end(va);
 
-  // fprintf(stderr, ...) processes message in parts, so logs from different
-  // threads may interleave. Send whole message at once to minimize this.
-  fputs(buf, stderr);
+  emscripten_log(EM_LOG_CONSOLE, "%s", buf);
 }
 
 CONNECTION_LISTENER_CALLBACKS MoonlightInstance::s_ClCallbacks = {
