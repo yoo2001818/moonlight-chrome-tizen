@@ -58,7 +58,6 @@ class MoonlightInstance : public pp::Instance, public pp::MouseLock {
             pp::MouseLock(this),
             m_HasNextPicture(false),
             m_IsPainting(false),
-            m_RequestIdrFrame(false),
             m_OpusDecoder(NULL),
             m_CallbackFactory(this),
             m_MouseLocked(false),
@@ -66,6 +65,8 @@ class MoonlightInstance : public pp::Instance, public pp::MouseLock {
             m_AccumulatedTicks(0),
             m_MouseDeltaX(0),
             m_MouseDeltaY(0),
+            m_MousePositionX(0),
+            m_MousePositionY(0),
             m_LastTouchUpTime(0),
             m_HttpThreadPoolSequence(0) {
             // This function MUST be used otherwise sockets don't work (nacl_io_init() doesn't work!)            
@@ -109,6 +110,8 @@ class MoonlightInstance : public pp::Instance, public pp::MouseLock {
         
         void MouseLockLost();
         void DidLockMouse(int32_t result);
+        void LockMouseOrJustCaptureInput();
+        void UnlockMouseOrJustReleaseInput();
         
         void OnConnectionStopped(uint32_t unused);
         void OnConnectionStarted(uint32_t error);
@@ -134,6 +137,7 @@ class MoonlightInstance : public pp::Instance, public pp::MouseLock {
         static void ClDisplayMessage(const char* message);
         static void ClDisplayTransientMessage(const char* message);
         static void ClLogMessage(const char* format, ...);
+        static void ClControllerRumble(unsigned short controllerNumber, unsigned short lowFreqMotor, unsigned short highFreqMotor);
         
         static Shader CreateProgram(const char* vertexShader, const char* fragmentShader);
         static void CreateShader(GLuint program, GLenum type, const char* source, int size);
@@ -162,6 +166,9 @@ class MoonlightInstance : public pp::Instance, public pp::MouseLock {
         void NvHTTPInit(int32_t callbackId, pp::VarArray args);
         void NvHTTPRequest(int32_t, int32_t callbackId, pp::VarArray args);
         
+    public:
+        const PPB_Gamepad* m_GamepadApi;
+        
     private:
         static CONNECTION_LISTENER_CALLBACKS s_ClCallbacks;
         static DECODER_RENDERER_CALLBACKS s_DrCallbacks;
@@ -170,6 +177,8 @@ class MoonlightInstance : public pp::Instance, public pp::MouseLock {
         std::string m_Host;
         std::string m_AppVersion;
         std::string m_GfeVersion;
+        std::string m_RtspUrl;
+        bool m_MouseLockingFeatureEnabled;
         STREAM_CONFIGURATION m_StreamConfig;
         bool m_Running;
         
@@ -185,7 +194,6 @@ class MoonlightInstance : public pp::Instance, public pp::MouseLock {
         bool m_HasNextPicture;
         PP_VideoPicture m_CurrentPicture;
         bool m_IsPainting;
-        bool m_RequestIdrFrame;
 
         pp::Rect m_PluginRect;
     
@@ -193,12 +201,12 @@ class MoonlightInstance : public pp::Instance, public pp::MouseLock {
         pp::Audio m_AudioPlayer;
         
         double m_LastPadTimestamps[4];
-        const PPB_Gamepad* m_GamepadApi;
         pp::CompletionCallbackFactory<MoonlightInstance> m_CallbackFactory;
         bool m_MouseLocked;
         bool m_WaitingForAllModifiersUp;
         float m_AccumulatedTicks;
         int32_t m_MouseDeltaX, m_MouseDeltaY;
+        int32_t m_MousePositionX, m_MousePositionY;
         PP_TimeTicks m_LastTouchUpTime;
         pp::FloatPoint m_LastTouchUpPoint;
     

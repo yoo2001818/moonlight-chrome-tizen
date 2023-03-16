@@ -4,7 +4,6 @@ var pairingCert;
 var myUniqueid = '0123456789ABCDEF'; // Use the same UID as other Moonlight clients to allow them to quit each other's games
 var api; // `api` should only be set if we're in a host-specific screen. on the initial screen it should always be null.
 var isInGame = false; // flag indicating whether the game stream started
-var windowState = 'normal'; // chrome's windowState, possible values: 'normal' or 'fullscreen'
 
 // Called by the common.js module.
 function attachListeners() {
@@ -15,54 +14,12 @@ function attachListeners() {
   $('#bitrateSlider').on('input', updateBitrateField); // input occurs every notch you slide
   //$('#bitrateSlider').on('change', saveBitrate); //FIXME: it seems not working
   $("#remoteAudioEnabledSwitch").on('click', saveRemoteAudio);
+  $("#mouseLockEnabledSwitch").on('click', saveMouseLock);
   $('#optimizeGamesSwitch').on('click', saveOptimize);
   $('#addHostCell').on('click', addHost);
   $('#backIcon').on('click', showHostsAndSettingsMode);
   $('#quitCurrentApp').on('click', stopGameWithConfirmation);
   $(window).resize(fullscreenNaclModule);
-  chrome.app.window.current().onMaximized.addListener(fullscreenChromeWindow);
-}
-
-function fullscreenChromeWindow() {
-  // when the user clicks the maximize button on the window,
-  // FIRST restore it to the previous size, then fullscreen it to the whole screen
-  // this prevents the previous window size from being 'maximized',
-  // and allows us to functionally retain two window sizes
-  // so that when the user hits `esc`, they go back to the "restored" size,
-  // instead of "maximized", which would immediately go to fullscreen
-  chrome.app.window.current().restore();
-  chrome.app.window.current().fullscreen();
-}
-
-function loadWindowState() {
-  if (!chrome.storage) {
-    return;
-  }
-
-  chrome.storage.sync.get('windowState', function(item) {
-    // load stored window state
-    windowState = (item && item.windowState) ?
-      item.windowState :
-      windowState;
-
-    // subscribe to chrome's windowState events
-    chrome.app.window.current().onFullscreened.addListener(onFullscreened);
-    chrome.app.window.current().onBoundsChanged.addListener(onBoundsChanged);
-  });
-}
-
-function onFullscreened() {
-  if (!isInGame && windowState == 'normal') {
-    storeData('windowState', 'fullscreen', null);
-    windowState = 'fullscreen';
-  }
-}
-
-function onBoundsChanged() {
-  if (!isInGame && windowState == 'fullscreen') {
-    storeData('windowState', 'normal', null);
-    windowState = 'normal';
-  }
 }
 
 function changeUiModeForNaClLoad() {
@@ -597,6 +554,7 @@ function showHostsAndSettingsMode() {
   $("#main-navigation").show();
   $(".nav-menu-parent").show();
   $("#externalAudioBtn").show();
+  $("#mouseLockBtn").show();
   $("#main-content").children().not("#listener, #loadingSpinner, #naclSpinner").show();
   $('#game-grid').hide();
   $('#backIcon').hide();
@@ -615,17 +573,13 @@ function showAppsMode() {
   $("#streamSettings").hide();
   $(".nav-menu-parent").hide();
   $("#externalAudioBtn").hide();
+  $("#mouseLockBtn").hide();
   $("#host-grid").hide();
   $("#settings").hide();
   $("#main-content").removeClass("fullscreen");
   $("#listener").removeClass("fullscreen");
   $('#loadingSpinner').css('display', 'none');
   $('body').css('backgroundColor', '#282C38');
-
-  // Restore back to a window
-  if (windowState == 'normal') {
-    chrome.app.window.current().restore();
-  }
 
   isInGame = false;
 
@@ -684,7 +638,8 @@ function startGame(host, appID) {
       var streamHeight = $('#selectResolution').data('value').split(':')[1];
       // we told the user it was in Mbps. We're dirty liars and use Kbps behind their back.
       var bitrate = parseInt($("#bitrateSlider").val()) * 1000;
-      console.log('%c[index.js, startGame]', 'color:green;', 'startRequest:' + host.address + ":" + streamWidth + ":" + streamHeight + ":" + frameRate + ":" + bitrate + ":" + optimize);
+      var mouse_lock_enabled = $("#mouseLockEnabledSwitch").parent().hasClass('is-checked') ? "1" : "0";
+      console.log('%c[index.js, startGame]', 'color:green;', 'startRequest:' + host.address + ":" + streamWidth + ":" + streamHeight + ":" + frameRate + ":" + bitrate + ":" + optimize + ":" + mouse_lock_enabled);
 
       var rikey = generateRemoteInputKey();
       var rikeyid = generateRemoteInputKeyId();
@@ -707,10 +662,11 @@ function startGame(host, appID) {
           }
 
           sendMessage('startRequest', [host.address, streamWidth, streamHeight, frameRate,
-            bitrate.toString(), rikey, rikeyid.toString(), host.appVersion, host.gfeVersion
+            bitrate.toString(), rikey, rikeyid.toString(), mouse_lock_enabled, host.appVersion, host.gfeVersion,
+            $root.find('sessionUrl0').text().trim()
           ]);
         }, function(failedResumeApp) {
-          console.eror('%c[index.js, startGame]', 'color:green;', 'Failed to resume the app! Returned error was' + failedResumeApp);
+          console.error('%c[index.js, startGame]', 'color:green;', 'Failed to resume the app! Returned error was' + failedResumeApp);
           showApps(host);
           return;
         });
@@ -744,7 +700,8 @@ function startGame(host, appID) {
         }
 
         sendMessage('startRequest', [host.address, streamWidth, streamHeight, frameRate,
-          bitrate.toString(), rikey, rikeyid.toString(), host.appVersion
+          bitrate.toString(), rikey, rikeyid.toString(), mouse_lock_enabled, host.appVersion, host.gfeVersion,
+          $root.find('sessionUrl0').text().trim()
         ]);
       }, function(failedLaunchApp) {
         console.error('%c[index.js, launchApp]', 'color: green;', 'Failed to launch app width id: ' + appID + '\nReturned error was: ' + failedLaunchApp);
@@ -763,11 +720,13 @@ function playGameMode() {
   $("#main-navigation").hide();
   $("#main-content").children().not("#listener, #loadingSpinner").hide();
   $("#main-content").addClass("fullscreen");
+  $("#listener").addClass("fullscreen");
 
-  chrome.app.window.current().fullscreen();
+  // Hide the NaCl module until the first frame is rendered
+  $("#nacl_module")[0].style.opacity = 0.0
+
   fullscreenNaclModule();
   $('#loadingSpinner').css('display', 'inline-block');
-
 }
 
 // Maximize the size of the nacl module by scaling and resizing appropriately
@@ -785,7 +744,7 @@ function fullscreenNaclModule() {
   var module = $("#nacl_module")[0];
   module.width = zoom * streamWidth;
   module.height = zoom * streamHeight;
-  module.style.paddingTop = ((screenHeight - module.height) / 2) + "px";
+  module.style.marginTop = ((screenHeight - module.height) / 2) + "px";
 }
 
 function stopGameWithConfirmation() {
@@ -901,6 +860,16 @@ function saveRemoteAudio() {
   }, 100);
 }
 
+function saveMouseLock() {
+  // MaterialDesignLight uses the mouseup trigger, so we give it some time to change the class name before
+  // checking the new state
+  setTimeout(function() {
+    var mouseLockState = $("#mouseLockEnabledSwitch").parent().hasClass('is-checked');
+    console.log('%c[index.js, saveMouseLock]', 'color: green;', 'Saving mouse lock state : ' + mouseLockState);
+    storeData('mouseLock', mouseLockState, null);
+  }, 100);
+}
+
 function updateDefaultBitrate() {
   var res = $('#selectResolution').data('value');
   var frameRate = $('#selectFramerate').data('value').toString();
@@ -936,8 +905,6 @@ function onWindowLoad() {
   // don't show the game selection div
   $('#gameSelection').css('display', 'none');
 
-  loadWindowState();
-
   if (chrome.storage) {
     // load stored resolution prefs
     chrome.storage.sync.get('resolution', function(previousValue) {
@@ -958,6 +925,17 @@ function onWindowLoad() {
         document.querySelector('#externalAudioBtn').MaterialIconToggle.uncheck();
       } else {
         document.querySelector('#externalAudioBtn').MaterialIconToggle.check();
+      }
+    });
+
+    // Load stored mouse lock prefs
+    chrome.storage.sync.get('mouseLock', function(previousValue) {
+      if (previousValue.mouseLock == null) {
+        document.querySelector('#mouseLockBtn').MaterialIconToggle.check();
+      } else if (previousValue.mouseLock == false) {
+        document.querySelector('#mouseLockBtn').MaterialIconToggle.uncheck();
+      } else {
+        document.querySelector('#mouseLockBtn').MaterialIconToggle.check();
       }
     });
 

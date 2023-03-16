@@ -52,6 +52,8 @@ void MoonlightInstance::ClLogMessage(const char* format, ...) {
   vsnprintf(buf, sizeof(buf), format, va);
   va_end(va);
 
+  // fprintf(stderr, ...) processes message in parts, so logs from different
+  // threads may interleave. Send whole message at once to minimize this.
   emscripten_log(EM_LOG_CONSOLE, "%s", buf);
 }
 
@@ -62,3 +64,4 @@ CONNECTION_LISTENER_CALLBACKS MoonlightInstance::s_ClCallbacks = {
     .connectionTerminated = MoonlightInstance::ClConnectionTerminated,
     .logMessage = MoonlightInstance::ClLogMessage,
 };
+

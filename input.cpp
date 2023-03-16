@@ -1,6 +1,7 @@
 #include "moonlight.hpp"
 
 #include "ppapi/c/ppb_input_event.h"
+#include "ppapi/cpp/mouse_cursor.h"
 
 #include "ppapi/cpp/input_event.h"
 
@@ -29,12 +30,35 @@ static int ConvertPPButtonToLiButton(PP_InputEvent_MouseButton ppButton) {
     }
 }
 
+void MoonlightInstance::LockMouseOrJustCaptureInput() {
+    if (m_MouseLockingFeatureEnabled) {
+        LockMouse(m_CallbackFactory.NewCallback(&MoonlightInstance::DidLockMouse));
+    }
+    else {
+        pp::MouseCursor::SetCursor(this, PP_MOUSECURSOR_TYPE_NONE);
+    }
+
+    // Assume it worked until we get a callback telling us otherwise;
+    // if not locking mouse this just serves to tell us whether to capture input
+    m_MouseLocked = true;
+}
+
+void MoonlightInstance::UnlockMouseOrJustReleaseInput() {
+    if (m_MouseLockingFeatureEnabled) {
+        UnlockMouse();
+    } else {
+        pp::MouseCursor::SetCursor(this, PP_MOUSECURSOR_TYPE_POINTER);
+    }
+    m_MouseLocked = false;
+    m_WaitingForAllModifiersUp = false;
+}
+
 void MoonlightInstance::DidLockMouse(int32_t result) {
     m_MouseLocked = (result == PP_OK);
     if (m_MouseLocked) {
         // Request an IDR frame to dump the frame queue that may have
         // built up from the GL pipeline being stalled.
-        g_Instance->m_RequestIdrFrame = true;
+        LiRequestIdrFrame();
     }
 }
 
@@ -123,6 +147,13 @@ void MoonlightInstance::ReportMouseMovement() {
     if (m_MouseDeltaX != 0 || m_MouseDeltaY != 0) {
         LiSendMouseMoveEvent(m_MouseDeltaX, m_MouseDeltaY);
         m_MouseDeltaX = m_MouseDeltaY = 0;
+    } else if (m_MousePositionX != 0 || m_MousePositionY != 0) {
+        // Clamp the input coordinates to the plugin area
+        short x = MIN(MAX(m_MousePositionX, 0), m_PluginRect.width());
+        short y = MIN(MAX(m_MousePositionY, 0), m_PluginRect.height());
+        LiSendMousePositionEvent(x, y, m_PluginRect.width(), m_PluginRect.height());
+        m_MousePositionX = 0;
+        m_MousePositionY = 0;
     }
     if (m_AccumulatedTicks != 0) {
         // We can have fractional ticks here, so multiply by WHEEL_DELTA
@@ -137,10 +168,7 @@ bool MoonlightInstance::HandleInputEvent(const pp::InputEvent& event) {
         case PP_INPUTEVENT_TYPE_MOUSEDOWN: {
             // Lock the mouse cursor when the user clicks on the stream
             if (!m_MouseLocked) {
-                LockMouse(m_CallbackFactory.NewCallback(&MoonlightInstance::DidLockMouse));
-                
-                // Assume it worked until we get a callback telling us otherwise
-                m_MouseLocked = true;
+                LockMouseOrJustCaptureInput();
                 return true;
             }
             
@@ -154,14 +182,23 @@ bool MoonlightInstance::HandleInputEvent(const pp::InputEvent& event) {
             if (!m_MouseLocked) {
                 return false;
             }
-            
+
             pp::MouseInputEvent mouseEvent(event);
             pp::Point posDelta = mouseEvent.GetMovement();
+            pp::Point position = mouseEvent.GetPosition();
             
             // Wait to report mouse movement until the next input polling window
             // to allow batching to occur which reduces overall input lag.
-            m_MouseDeltaX += posDelta.x();
-            m_MouseDeltaY += posDelta.y();
+            if (m_MouseLocked) {
+                if (m_MouseLockingFeatureEnabled) {
+                    m_MouseDeltaX += posDelta.x();
+                    m_MouseDeltaY += posDelta.y();
+                } else {
+                    m_MousePositionX = position.x();
+                    m_MousePositionY = position.y();
+                }
+            }
+            
             return true;
         }
         
@@ -229,9 +266,7 @@ bool MoonlightInstance::HandleInputEvent(const pp::InputEvent& event) {
              
             // Check if all modifiers are up now
             if (m_WaitingForAllModifiersUp && modifiers == 0) {
-                UnlockMouse();
-                m_MouseLocked = false;
-                m_WaitingForAllModifiersUp = false;
+                UnlockMouseOrJustReleaseInput();
             }
             
             LiSendKeyboardEvent(KEY_PREFIX << 8 | keyCode,
@@ -251,11 +286,8 @@ bool MoonlightInstance::HandleInputEvent(const pp::InputEvent& event) {
                 sqrt(pow(m_LastTouchUpPoint.x() - touchPoint.x(), 2) +
                      pow(m_LastTouchUpPoint.y() - touchPoint.y(), 2)) > TOUCH_DEAD_ZONE_RADIUS) {
                 // Scale the touch coordinates to the video rect
-                //
-                // For some reason, the x coordinate is already relative to the plugin rect,
-                // while the y coordinate is not. No clue why that is the case but oh well...
                 short x = MIN(MAX(touchPoint.x(), 0), m_PluginRect.width());
-                short y = MIN(MAX(touchPoint.y() - m_PluginRect.y(), 0), m_PluginRect.height());
+                short y = MIN(MAX(touchPoint.y(), 0), m_PluginRect.height());
 
                 // Update the mouse position prior to sending the button down
                 LiSendMousePositionEvent(x, y, m_PluginRect.width(), m_PluginRect.height());

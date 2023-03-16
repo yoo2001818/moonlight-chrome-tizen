@@ -80,7 +80,23 @@ function handleMessage(msg) {
       // FIXME: Really use a dialog
       snackbarLogLong(msg.data.replace('DialogMsg: ', ''));
     } else if (msg.data === 'displayVideo') {
-      $("#listener").addClass("fullscreen");
+      // Show the video stream now
+      $("#nacl_module")[0].style.opacity = 1.0;
+    } else if (msg.data.indexOf('controllerRumble: ' ) === 0) {
+      const eventData = msg.data.split( ' ' )[1].split(',');
+      const gamepadIdx = parseInt(eventData[0]);
+      const weakMagnitude = parseFloat(eventData[1]);
+      const strongMagnitude = parseFloat(eventData[2]);
+      console.log("Playing rumble on gamepad " + gamepadIdx + " with weakMagnitude " + weakMagnitude + " and strongMagnitude " + strongMagnitude);
+
+      // We may not actually have a gamepad at this index.
+      // Even if we do have a gamepad, it may not have a vibrationActuator associated with it.
+      navigator.getGamepads()[gamepadIdx]?.vibrationActuator?.playEffect('dual-rumble', {
+        startDelay: 0,
+        duration: 5000, // Moonlight should be sending another rumble event when stopping.
+        weakMagnitude: weakMagnitude,
+        strongMagnitude: strongMagnitude,
+      });
     }
   }
 }
