@@ -162,7 +162,7 @@ int MoonlightInstance::StartupVidDecSetup(int videoFormat, int width,
   {
     auto add_track_result = g_Instance->m_Source.AddTrack(
       samsung::wasm::ElementaryVideoTrackConfig{
-          "video/mp4; codecs=\"hev1.1.6.L93.B0\"",  // h265 mimeType
+          "video/mp4; codecs=\"hev1.2.4.L120.B0\"",  // h265 mimeType
           {},                                   // extradata (empty?)
           static_cast<uint32_t>(width),
           static_cast<uint32_t>(height),
