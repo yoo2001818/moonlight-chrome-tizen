@@ -12,6 +12,7 @@
 #include "samsung/wasm/elementary_media_packet.h"
 #include "samsung/wasm/elementary_video_track_config.h"
 #include "samsung/html/html_media_element_listener.h"
+#include "samsung/wasm/operation_result.h"
 
 #define INITIAL_DECODE_BUFFER_LEN 128 * 1024
 
@@ -19,6 +20,8 @@ using std::chrono_literals::operator""s;
 using std::chrono_literals::operator""ms;
 using EmssReadyState = samsung::wasm::ElementaryMediaStreamSource::ReadyState;
 using EmssOperationResult = samsung::wasm::OperationResult;
+using EmssAsyncResult = samsung::wasm::OperationResult;
+using HTMLAsyncResult = samsung::wasm::OperationResult;
 using TimeStamp = samsung::wasm::Seconds;
 
 static constexpr TimeStamp kFrameTimeMargin = 0.5ms;

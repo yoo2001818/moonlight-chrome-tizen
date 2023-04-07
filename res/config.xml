@@ -5,7 +5,7 @@
     <content src="index.html"/>
     <description>MoonlightWasm</description>
     <feature name="http://tizen.org/feature/screen.size.all"/>
-    <icon src="icon128.png"/>
+    <icon src="./icons/icon128.png"/>
     <name>MoonlightWasm</name>
     <tizen:privilege name="http://tizen.org/privilege/unlimitedstorage"/>
     <tizen:privilege name="http://tizen.org/privilege/filesystem.write"/>
