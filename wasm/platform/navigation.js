@@ -141,6 +141,9 @@ const Views = {
     right: function() {
       this.view.next();
     },
+    down: function() {
+        document.getElementById('continueAddHost').click();
+    },
     accept: function() {
       document.getElementById(this.view.current()).click();
     },
@@ -163,6 +166,9 @@ const Views = {
     },
     right: function() {
       this.view.next();
+    },
+    down: function() {
+        document.getElementById('continueDeleteHost').click();
     },
     accept: function() {
       document.getElementById(this.view.current()).click();
