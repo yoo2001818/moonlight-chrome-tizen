@@ -1,28 +1,49 @@
-# Moonlight for ChromeOS
+# Moonlight for Tizen
+An easy method for building Moonlight for Samsung TV
 
-[Moonlight for ChromeOS](https://moonlight-stream.org) is an open source client for NVIDIA GameStream, as used by the NVIDIA Shield.
-
-Moonlight for ChromeOS allows you to stream your full collection of games from your powerful desktop to another PC or laptop running ChromeOS.
-
-For Windows, Mac, and Linux, we recommend running the [new PC port](https://github.com/moonlight-stream/moonlight-qt) for maximum performance.
-
-Moonlight also has mobile versions for [Android](https://github.com/moonlight-stream/moonlight-android) and [iOS/tvOS](https://github.com/moonlight-stream/moonlight-ios).
-
-Check out [the Moonlight wiki](https://github.com/moonlight-stream/moonlight-docs/wiki) for more detailed project information, setup guide, or troubleshooting steps.
-
-[![AppVeyor Build Status](https://ci.appveyor.com/api/projects/status/w716mt9ulyww68c5/branch/master?svg=true)](https://ci.appveyor.com/project/cgutman/moonlight-chrome/branch/master)
-
-[![Moonlight for ChromeOS](https://moonlight-stream.org/images/chrome_webstore.png)](https://chrome.google.com/webstore/detail/moonlight-game-streaming/gemamigbbenahjlfnmlfdjhdnkpbkfjj)
+## Credits
+- Moonlight developers: https://moonlight-stream.org
+- Samsung developers: https://github.com/SamsungDForum/moonlight-chrome
+- This Dockerfile and support files have been adapted from [jellyfin-docker-tizen](https://github.com/babagreensheep/jellyfin-tizen-docker)
+- Dockerfile readapted for my repository tizen from [pablojrl123](https://github.com/pablojrl123/moonlight-tizen-docker)
 
 ## Building
-1. Install the Chrome Native Client SDK and download the current Pepper SDK
-2. Set the `NACL_SDK_ROOT` environment variable to your Pepper SDK folder. If you need more detailed instructions, see [here](https://github.com/google/pepper.js/wiki/Getting-Started)
-3. Run `git submodule update --init --recursive` from within `moonlight-chrome/`
-4. Run `make` from within the `moonlight-chrome/` repo
-
-## Testing
-1. Open the Extensions page in Chrome
-2. Check the 'Developer mode' option
-3. Click 'Load unpacked extension' and point it at your built moonlight-chrome repo
-4. Run Moonlight from the extensions page
-5. If making changes, make sure to click the Reload button on the Extensions page
+1. Enable developer mode on the TV (more information on [official Samsung guide](https://developer.samsung.com/smarttv/develop/getting-started/using-sdk/tv-device.html)):
+	- Go to Apps.
+	- Press `12345` on the remote; a dialog should pop up.
+	- Set `Developer mode` to `On`; fill in the IP of the Docker host.
+	- Power off and power on the TV as instructed; go once again to Apps.
+	- Depending on your model, a "DEVELOP MODE" or similar message might appear.
+   
+2. Build the application within a Docker image:
+	```
+	docker build -t moonlight-tizen .
+	```
+	This will take a while.
+3. Deploy the application to the TV:
+	- Run and enter a container; the container will be removed automatically on exit:
+	 ```
+	 docker run -it --rm moonlight-tizen
+	 ```
+	- Connect to your TV over Smart Development Bridge:
+	 ```sh
+	 sdb connect YOUR_TV_IP
+	 ```
+	- Confirm that you are connected, take note of the device ID:
+	 ```
+	 sdb devices
+	 ```
+	 The device ID will be the last column, something like `UE65NU7400`.
+	- Install the package:
+	 ```sh
+	 tizen install -n MoonlightWasm.wgt -t DEVICE_ID
+	 ```
+	 Moonlight should now appear in your Recent Apps - or similar page - on your TV.
+	- Exit the container:
+	 ```sh
+	 exit
+	 ```
+	- (Optional) Remove the Docker image:
+	 ```sh
+	 docker image rm moonlight-tizen
+	 ```
