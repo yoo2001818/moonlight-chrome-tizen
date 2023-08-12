@@ -7,6 +7,10 @@
 #include <Limelight.h>
 #include <emscripten/emscripten.h>
 
+// On XBox controller this is start+menu+left trigger+right trigger
+const short STOP_STREAM_BUTTONS_FLAGS =
+    LB_FLAG | RB_FLAG | PLAY_FLAG | BACK_FLAG;
+
 // For explanation on ordering, see: https://www.w3.org/TR/gamepad/#remapping
 enum GamepadAxis {
   LeftX = 0,
@@ -92,6 +96,12 @@ void MoonlightInstance::PollGamepads() {
       * std::numeric_limits<short>::max();
     const auto rightStickY = -gamepad.axis[GamepadAxis::RightY]
       * std::numeric_limits<short>::max();
+
+    if (buttonFlags == STOP_STREAM_BUTTONS_FLAGS) {
+        PostToJs(std::string("stopping stream, button flags is ") + std::to_string(buttonFlags));
+        stopStream();
+        return;
+    }
 
     LiSendMultiControllerEvent(
         gamepadID, activeGamepadMask, buttonFlags, leftTrigger,
