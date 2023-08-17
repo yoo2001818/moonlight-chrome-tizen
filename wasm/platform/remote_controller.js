@@ -20,5 +20,14 @@ function remoteControllerHandler(e) {
   case tvKey.KEY_RETURN:
     Navigation.back();
     break;
+  case tvKey.KEY_VOLUME_UP:
+    tizen.tvaudiocontrol.setVolumeUp();
+    break;
+  case tvKey.KEY_VOLUME_DOWN:
+    tizen.tvaudiocontrol.setVolumeDown();
+    break;
+  case tvKey.KEY_VOLUME_MUTE:
+    tizen.tvaudiocontrol.setMute();
+    break;
   }
 }
