@@ -28,7 +28,7 @@ Also, you should run "Docker Desktop" before proceeding further and it is also r
 	```
 	- This operation may take a while, please be patient.
 3. After that, in `Windows PowerShell`, follow the steps below to install the application on your TV:
-	 ```
+
 	- Next, enter the following command to connect to your "Samsung Smart TV" over "Smart Development Bridge":
 	 ```
 	 sdb connect YOUR_TV_IP
@@ -50,7 +50,7 @@ Also, you should run "Docker Desktop" before proceeding further and it is also r
 	 exit
 	 ```
  	> Note: At the end you can enter the `exit` command to close the `Windows PowerShell` window.
-	 ```
+	 
 4. (Optional) Disable the "Developer mode" in your "Samsung Smart TV":
 	- Go to the `Apps` panel.
 	- Press `12345` on the remote and a dialog should popup.
