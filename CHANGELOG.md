@@ -7,9 +7,13 @@ All notable changes to this project will be documented in this file.
 ### Added
 - Support for rumble (modified code from the original NaCl moonlight-chrome)
 - Now the controller will vibrate on first connection to notify the user
+- Controller should vibrate during gameplay (if supported by app and controller)
 
 ### Changed
-- Updated the project readme to reflect the changes in the building process 
+- Updated the project readme to reflect the changes in the building process
+
+### Removed
+- Unnecessary files (mostly duplicates)
 
 ## v1.0.7 All credits for the changes go to ndriqimlahu (deleted repository)
 
