@@ -5,6 +5,7 @@ var myUniqueid = '0123456789ABCDEF'; // Use the same UID as other Moonlight clie
 var api; // `api` should only be set if we're in a host-specific screen. on the initial screen it should always be null.
 var isInGame = false; // flag indicating whether the game stream started
 var windowState = 'normal'; // chrome's windowState, possible values: 'normal' or 'fullscreen'
+var isDialogOpen = false; // track whether the dialog is open
 
 // Called by the common.js module.
 function attachListeners() {
@@ -250,7 +251,7 @@ function pairTo(nvhttpHost, onSuccess, onFailure) {
 
   nvhttpHost.pollServer(function(ret) {
     if (!nvhttpHost.online) {
-      snackbarLog('Failed to connect to ' + nvhttpHost.hostname + '! Ensure that GameStream is enabled in GeForce Experience.');
+      snackbarLog('Failed to connect to ' + nvhttpHost.hostname + '! Ensure Sunshine is running on your host PC or GameStream is enabled in GeForce Experience SHIELD settings.');
       console.error('%c[index.js]', 'color: green;', 'Host declared as offline:', nvhttpHost, nvhttpHost.toString()); //Logging both the object and the toString version for text logs
       onFailure();
       return;
@@ -263,7 +264,7 @@ function pairTo(nvhttpHost, onSuccess, onFailure) {
 
     var randomNumber = String("0000" + (Math.random() * 10000 | 0)).slice(-4);
     var pairingDialog = document.querySelector('#pairingDialog');
-    $('#pairingDialogText').html('Please enter the number ' + randomNumber + ' on the GFE dialog on the computer.  This dialog will be dismissed once complete');
+    $('#pairingDialogText').html('Please enter the following PIN on the target PC:  ' + randomNumber + '<br><br>If your host PC is running Sunshine, navigate to the Sunshine web UI to enter the PIN.<br>Alternatively, navigate to the GeForce Experience (NVIDIA GPUs only) to enter the PIN.<br><br>This dialog will close once the pairing is complete.');
     pairingDialog.showModal();
     Navigation.push(Views.PairingDialog);
 
@@ -293,7 +294,6 @@ function pairTo(nvhttpHost, onSuccess, onFailure) {
 }
 
 function hostChosen(host) {
-
   if (!host.online) {
     return;
   }
@@ -365,7 +365,7 @@ function addHost() {
       }
     }.bind(this),
     function(failure) {
-      snackbarLog('Failed to connect to ' + _nvhttpHost.hostname + '! Ensure that GameStream is enabled in GeForce Experience.');
+      snackbarLog('Failed to connect to ' + _nvhttpHost.hostname + '! Ensure Sunshine is running on your host PC or GameStream is enabled in GeForce Experience SHIELD settings.');
     }.bind(this));
   });
 }
@@ -373,7 +373,6 @@ function addHost() {
 
 // host is an NvHTTP object
 function addHostToGrid(host, ismDNSDiscovered) {
-
   var outerDiv = $("<div>", {
     class: 'host-container mdl-card mdl-shadow--4dp',
     id: 'host-container-' + host.serverUid,
@@ -445,6 +444,68 @@ function removeClicked(host) {
     saveHosts();
     deleteHostDialog.close();
     Navigation.pop();
+  });
+}
+
+// Function to create and show the Terminate Moonlight dialog
+function showTerminateMoonlightDialog() {
+  // Find the existing dialog element
+  var terminateMoonlightDialog = document.querySelector('#terminateMoonlightDialog');
+
+  if (!terminateMoonlightDialog) {
+    // If the dialog element doesn't exist, create it
+    var terminateMoonlightDialog = document.createElement('dialog');
+    terminateMoonlightDialog.id = 'terminateMoonlightDialog';
+    terminateMoonlightDialog.classList.add('mdl-dialog');
+
+    // Create the dialog content
+    terminateMoonlightDialog.innerHTML = `
+      <h3 class="mdl-dialog__title">Exit Moonlight</h3>
+      <div class="mdl-dialog__content">
+        <p id="terminateMoonlightDialogText">
+          Are you sure you want to exit Moonlight?
+        </p>
+      </div>
+      <div class="mdl-dialog__actions">
+        <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect" id="cancelTerminateMoonlight">Cancel</button>
+        <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect" id="exitTerminateMoonlight">Exit</button>
+      </div>
+    `;
+
+    // Append the dialog to the DOM
+    document.body.appendChild(terminateMoonlightDialog);
+
+    // Initialize the dialog
+    componentHandler.upgradeElements(terminateMoonlightDialog);
+  }
+
+  // Show the dialog and push the view
+  terminateMoonlightDialog.showModal();
+  Navigation.push(Views.TerminateMoonlightDialog);
+
+  // Set the dialog as open
+  isDialogOpen = true;
+
+  // Close the dialog if the Cancel button is pressed
+  $('#cancelTerminateMoonlight').off('click');
+  $('#cancelTerminateMoonlight').on('click', function() {
+    terminateMoonlightDialog.close();
+    // Remove the dialog from the DOM if the dialog is open
+    document.body.removeChild(terminateMoonlightDialog);
+    isDialogOpen = false;
+    Navigation.pop();
+    Navigation.change(Views.Hosts);
+  });
+
+  // Terminate the application if the Exit button is pressed
+  $('#exitTerminateMoonlight').off('click');
+  $('#exitTerminateMoonlight').on('click', function() {
+    terminateMoonlightDialog.close();
+    // Remove the dialog from the DOM if the dialog is open
+    document.body.removeChild(terminateMoonlightDialog);
+    isDialogOpen = false;
+    Navigation.pop();
+    tizen.application.getCurrentApplication().exit();
   });
 }
 
@@ -826,8 +887,8 @@ function stopGameWithConfirmation() {
     api.getAppById(api.currentGame).then(function(currentGame) {
       var quitAppDialog = document.querySelector('#quitAppDialog');
       document.getElementById('quitAppDialogText').innerHTML =
-        ' Are you sure you would like to quit ' +
-        currentGame.title + '?  Unsaved progress will be lost.';
+        ' Are you sure you want to quit ' +
+        currentGame.title + '?  All unsaved data will be lost.';
       quitAppDialog.showModal();
       Navigation.push(Views.CloseAppDialog);
       $('#cancelQuitApp').off('click');
@@ -911,7 +972,7 @@ function openIndexDB(callback) {
         console.log("Storage may be cleared by the UA under storage pressure.");
     });
   } else {
-    console.log('Persistent storage not avaialable');
+    console.log('Persistent storage not available');
   }
 
   if (!indexedDB) {
@@ -988,7 +1049,7 @@ function getData(key, callbackFunction) {
       };
 
       transaction.onerror = function(e) {
-        console.error('Erorr reading data at key: "' + key +
+        console.error('Error reading data at key: "' + key +
                       '" from IndexDB: ' + e);
         callCb(key, value, callbackFunction);
       };
@@ -1021,7 +1082,7 @@ function storeData(key, data, callbackFunction) {
       // Open a transaction to the database
       const transaction = db.transaction(storeName, 'readwrite');
 
-      // Put the text into the dabase
+      // Put the text into the database
       const put = transaction.objectStore(storeName).put(
                   JSON.stringify(data), key);
 
@@ -1033,7 +1094,7 @@ function storeData(key, data, callbackFunction) {
       };
 
       transaction.onerror = function(e) {
-        console.error('Erorr storing data in IndexDB: ' + e);
+        console.error('Error storing data in IndexDB: ' + e);
       };
     } catch (e) {
       console.log('storeData: caught exception while storing key:' + key);
@@ -1069,7 +1130,7 @@ function saveOptimize() {
 function saveFramePacing() {
   setTimeout(function() {
     const chosenFramePacing = $("#framePacingSwitch").parent().hasClass('is-checked');
-    console.log('%c[index.js, saveFramePacing]', 'color: green;', 'Saving framePacing state : ' + chosenFramePacing);
+    console.log('%c[index.js, saveFramePacing]', 'color: green;', 'Saving frame pacing state : ' + chosenFramePacing);
     storeData('framePacing', chosenFramePacing, null);
   }, 100);
 }
@@ -1089,8 +1150,6 @@ function saveFramerate() {
   updateDefaultBitrate();
   Navigation.pop();
 }
-
-
 
 // storing data in chrome.storage takes the data as an object, and shoves it into JSON to store
 // unfortunately, objects with function instances (classes) are stripped of their function instances when converted to a raw object
@@ -1117,28 +1176,35 @@ function updateDefaultBitrate() {
   var res = $('#selectResolution').data('value');
   var frameRate = $('#selectFramerate').data('value').toString();
 
-  if (res === "1920:1080") {
-    if (frameRate === "30") { // 1080p, 30fps
-      $('#bitrateSlider')[0].MaterialSlider.change('10');
-    } else { // 1080p, 60fps
-      $('#bitrateSlider')[0].MaterialSlider.change('20');
+  // These quality presets include video resolution like 480p, 720p, 1080p, 1440p, 2160p (4K) and video frame rate like 30 FPS and 60 FPS
+  if (res === "858:480") {
+    if (frameRate === "30") { // 480p, 30 FPS
+      $('#bitrateSlider')[0].MaterialSlider.change('2');
+    } else { // 480p, 60 FPS
+      $('#bitrateSlider')[0].MaterialSlider.change('4');
     }
   } else if (res === "1280:720") {
-    if (frameRate === "30") { // 720, 30fps
+    if (frameRate === "30") { // 720p, 30 FPS
       $('#bitrateSlider')[0].MaterialSlider.change('5');
-    } else { // 720, 60fps
+    } else { // 720p, 60 FPS
       $('#bitrateSlider')[0].MaterialSlider.change('10');
     }
-  } else if (res === "2560:1440") {
-    if (frameRate === "30") { // 1140, 30fps
+  } else if (res === "1920:1080") {
+    if (frameRate === "30") { // 1080p, 30 FPS
+      $('#bitrateSlider')[0].MaterialSlider.change('10');
+    } else { // 1080p, 60 FPS
       $('#bitrateSlider')[0].MaterialSlider.change('20');
-    } else { // 1140, 60fps
+    }
+  } else if (res === "2560:1440") {
+    if (frameRate === "30") { // 1440p, 30 FPS
+      $('#bitrateSlider')[0].MaterialSlider.change('20');
+    } else { // 1440p, 60 FPS
       $('#bitrateSlider')[0].MaterialSlider.change('40');
     }
   } else if (res === "3840:2160") {
-    if (frameRate === "30") { // 2160p, 30fps
+    if (frameRate === "30") { // 2160p (4K), 30 FPS
       $('#bitrateSlider')[0].MaterialSlider.change('40');
-    } else { // 2160p, 60fps
+    } else { // 2160p (4K), 60 FPS
       $('#bitrateSlider')[0].MaterialSlider.change('80');
     }
   } else { // unrecognized option. In case someone screws with the JS to add custom resolutions
@@ -1255,7 +1321,7 @@ function loadUserDataCb() {
 
   console.log('load stored bitrate prefs');
   getData('bitrate', function(previousValue) {
-    $('#bitrateSlider')[0].MaterialSlider.change(previousValue.bitrate != null ? previousValue.bitrate : '10');
+    $('#bitrateSlider')[0].MaterialSlider.change(previousValue.bitrate != null ? previousValue.bitrate : '20');
     updateBitrateField();
   });
 }
@@ -1339,11 +1405,30 @@ window.onload = onWindowLoad;
 
 // Required on TizenTV, to get gamepad events.
 window.addEventListener('gamepadconnected', function(event) {
-  console.log('%c[index.js, gamepadconnected] gamepad connected: ' +
-              JSON.stringify(event.gamepad),
-              event.gamepad);
-});
+	  const connectedGamepad = event.gamepad;
+	  console.log('%c[index.js, gamepadconnected] gamepad connected: ', 'color: green;', connectedGamepad);
 
+    if (connectedGamepad.vibrationActuator) { // Check if the gamepad supports rumble, and if so rumble once to notify users.
+        console.log('Gamepad supports vibration.');
+
+        // Specify vibration parameters
+        const startDelay = 0;
+        const duration = 200; // in milliseconds
+        const weakMagnitude = 0.5;
+        const strongMagnitude = 0.5; 
+
+        // Play the dual-rumble effect
+        connectedGamepad.vibrationActuator.playEffect('dual-rumble', {
+            startDelay: startDelay,
+            duration: duration,
+            weakMagnitude: weakMagnitude,
+            strongMagnitude: strongMagnitude,
+        });
+
+	  } else {
+	    console.log('Gamepad does not support vibration.');
+	  }
+});
 // Required on TizenTV, to get gamepad events.
 window.addEventListener('gamepaddisconnected', function(event) {
   console.log('%c[index.js, gamepaddisconnected] gamepad disconnected: ' +
