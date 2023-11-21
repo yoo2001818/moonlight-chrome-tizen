@@ -39,7 +39,7 @@ RUN tizen security-profiles add \
 	-p 1234
 
 # Workaround to package applications without gnome-keyring
-# These steps must be repeated each time prior to packaging an application. 
+# These steps must be repeated each time prior to packaging an application.
 # See <https://developer.tizen.org/forums/sdk-ide/pwd-fle-format-profile.xml-certificates>
 RUN sed -i 's|/home/moonlight/tizen-studio-data/keystore/author/Moonlight.pwd||' /home/moonlight/tizen-studio-data/profile/profiles.xml
 RUN sed -i 's|/home/moonlight/tizen-studio-data/tools/certificate-generator/certificates/distributor/tizen-distributor-signer.pwd|tizenpkcs12passfordsigner|' /home/moonlight/tizen-studio-data/profile/profiles.xml
@@ -53,6 +53,7 @@ RUN ./emsdk activate latest-fastcomp
 WORKDIR ../..
 
 # Build moonlight
+#RUN git clone https://github.com/OneLiberty/moonlight-chrome-tizen
 COPY --chown=moonlight . ./moonlight-chrome-tizen
 
 RUN cmake \
@@ -65,7 +66,7 @@ RUN cmake --install build --prefix build
 
 RUN cp moonlight-chrome-tizen/icons/icon.png build/widget/
 
-# Package and sign application 
+# Package and sign application
 # Effectively runs `tizen package -t wgt -- build/widget`,
 # but uses an expect cmdfile to automate the password prompt.
 RUN echo \
@@ -78,7 +79,7 @@ RUN echo \
 	'expect eof\n' \
 | expect
 
-RUN mv build/widget/MoonlightWasm.wgt .
+RUN mv build/widget/Moonlight.wgt .
 
 # remove unneed files
 RUN rm -rf \
