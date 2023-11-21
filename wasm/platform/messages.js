@@ -105,17 +105,22 @@ function handleMessage(msg) {
   } else if (msg === 'displayVideo') {
     $("#listener").addClass("fullscreen");
   } else if (msg.indexOf('controllerRumble: ') === 0) {
-    const eventData = msg.split(' ')[1].split(',');
-    const gamepadIdx = parseInt(eventData[0]);
-    const weakMagnitude = parseFloat(eventData[1]);
-    const strongMagnitude = parseFloat(eventData[2]);
-    console.log("Playing rumble on gamepad " + gamepadIdx + " with weakMagnitude " + weakMagnitude + " and strongMagnitude " + strongMagnitude);
+	  const eventData = msg.split(' ')[1].split(',');
+	  const gamepadIdx = parseInt(eventData[0]);
+	  const weakMagnitude = parseFloat(eventData[1]);
+	  const strongMagnitude = parseFloat(eventData[2]);
+	  console.log("Playing rumble on gamepad " + gamepadIdx + " with weakMagnitude " + weakMagnitude + " and strongMagnitude " + strongMagnitude);
 
-    navigator.getGamepads()[gamepadIdx]?.vibrationActuator?.playEffect('dual-rumble', {
-      startDelay: 0,
-      duration: 200,
-      weakMagnitude: weakMagnitude,
-      strongMagnitude: strongMagnitude,
-    });
-  }
+	  const gamepads = navigator.getGamepads();
+	  const gamepad = gamepads[gamepadIdx];
+
+	  if (gamepad && gamepad.vibrationActuator) {
+	    gamepad.vibrationActuator.playEffect('dual-rumble', {
+	      startDelay: 0,
+	      duration: 200,
+	      weakMagnitude: weakMagnitude,
+	      strongMagnitude: strongMagnitude,
+	    });
+	  }
+	}
 }
