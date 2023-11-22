@@ -46,34 +46,39 @@ function isPopupActive(id) {
       .classList
       .contains('is-visible');
 }
+
 class ListView {
-  constructor(func) {
-    this.index = 0;
-    this.func = func;
-  }
+	  constructor(func) {
+	    this.index = 0;
+	    this.func = func;
+	  }
 
-  prev() {
-    if (this.index > 0 ) {
-      const array = this.func();
-      unmark(array[this.index]);
-      --this.index;
-      mark(array[this.index]);
-    }
-  }
+	  prev() {
+	    if (this.index > 0) {
+	      unmark(this.func()[this.index]);
+	      --this.index;
+	      mark(this.func()[this.index]);
+	    }
 
-  next() {
-    const array = this.func();
-    if (this.index < array.length - 1) {
-      unmark(array[this.index]);
-      ++this.index;
-      mark(array[this.index]);
-    }
-  }
+	    return this.func()[this.index];
+	  }
 
-  current() {
-    return this.func()[this.index];
-  }
-};
+	  next() {
+	    const array = this.func();
+	    if (this.index < array.length - 1) {
+	      unmark(array[this.index]);
+	      ++this.index;
+	      mark(array[this.index]);
+	    }
+
+	    return array[this.index];
+	  }
+
+	  current() {
+	    return this.func()[this.index];
+	  }
+	}
+
 
 const Views = {
   Hosts: {
@@ -140,18 +145,20 @@ const Views = {
       'cancelAddHost']),
     left: function() {
       this.view.prev();
+      document.getElementById(this.view.current()).focus();
     },
     right: function() {
       this.view.next();
-    },
-    down: function() {
-        document.getElementById('continueAddHost').click();
+      document.getElementById(this.view.current()).focus();
     },
     accept: function() {
       document.getElementById(this.view.current()).click();
     },
     back: function() {
       document.getElementById('cancelAddHost').click();
+    },
+    down: function() {
+      document.getElementById('continueAddHost').focus()
     },
     enter: function() {
       mark(this.view.current());
@@ -166,9 +173,11 @@ const Views = {
       'cancelDeleteHost']),
     left: function() {
       this.view.prev();
+      document.getElementById(this.view.current()).focus();
     },
     right: function() {
       this.view.next();
+      document.getElementById(this.view.current()).focus();
     },
     down: function() {
         document.getElementById('continueDeleteHost').click();
@@ -309,9 +318,11 @@ const Views = {
     },
     left: function() {
       this.view.prev();
+      document.getElementById(this.view.current()).focus();
     },
     right: function() {
       this.view.next();
+      document.getElementById(this.view.current()).focus();
     },
     accept: function() {
       document.getElementById(this.view.current()).click();
@@ -336,9 +347,11 @@ const Views = {
     },
     left: function() {
       this.view.prev();
+      document.getElementById(this.view.current()).focus();
     },
     right: function() {
       this.view.next();
+      document.getElementById(this.view.current()).focus();
     },
     accept: function() {
       document.getElementById(this.view.current()).click();
@@ -354,23 +367,26 @@ const Views = {
     },
   },
   TerminateMoonlightDialog: {
+    isActive: () => isDialogActive('TerminateMoonlightDialog'),
     view: new ListView(() => [
       'exitTerminateMoonlight',
       'cancelTerminateMoonlight']),
     left: function() {
       this.view.prev();
+      document.getElementById(this.view.current()).focus();
     },
     right: function() {
       this.view.next();
+      document.getElementById(this.view.current()).focus();
     },
     down: function() {
-      document.getElementById('exitTerminateMoonlight').click();
+      document.getElementById('exitTerminateMoonlight').focus();
     },
     accept: function() {
       document.getElementById(this.view.current()).click();
     },
     back: function() {
-      document.getElementById('cancelTerminateMoonlight').click();
+      document.getElementById('cancelTerminateMoonlight').focus();
     },
     enter: function() {
       mark(this.view.current());
