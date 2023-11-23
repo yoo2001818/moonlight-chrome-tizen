@@ -51,6 +51,8 @@ function attachListeners() {
     const gamepadMapping = {
       0: () => Navigation.accept(),
       1: () => Navigation.back(),
+      8: () => Navigation.selectBtn(),
+      9: () => Navigation.startBtn(),
       12: () => Navigation.up(),
       13: () => Navigation.down(),
       14: () => Navigation.left(),
@@ -265,6 +267,7 @@ function pairTo(nvhttpHost, onSuccess, onFailure) {
     var randomNumber = String("0000" + (Math.random() * 10000 | 0)).slice(-4);
     var pairingDialog = document.querySelector('#pairingDialog');
     $('#pairingDialogText').html('Please enter the following PIN on the target PC:  ' + randomNumber + '<br><br>If your host PC is running Sunshine, navigate to the Sunshine web UI to enter the PIN.<br>Alternatively, navigate to the GeForce Experience (NVIDIA GPUs only) to enter the PIN.<br><br>This dialog will close once the pairing is complete.');
+    pairingDialog.close();
     pairingDialog.showModal();
     Navigation.push(Views.PairingDialog);
 
@@ -446,6 +449,8 @@ function removeClicked(host) {
     Navigation.pop();
   });
 }
+
+window.removeClicked = removeClicked;
 
 // Function to create and show the Terminate Moonlight dialog
 function showTerminateMoonlightDialog() {

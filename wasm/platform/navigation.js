@@ -103,6 +103,14 @@ const Views = {
     back: function() {
       showTerminateMoonlightDialog(); /* Show the dialog and push the view */
     },
+    startBtn: function() {
+      const element = this.view.current();
+      if (element.id != 'addHostCell') {
+          element.children[1].click();
+        }
+    },
+    selectBtn: function() { //for future use
+    },
     enter: function() {
       mark(this.view.current());
     },
@@ -493,6 +501,8 @@ const Navigation = (function() {
     right: runOp('right'),
     up: runOp('up'),
     down: runOp('down'),
+    startBtn: runOp('startBtn'),
+    selectBtn: runOp('selectBtn'),
     push: Stack.push,
     change: Stack.change,
     pop: Stack.pop,
