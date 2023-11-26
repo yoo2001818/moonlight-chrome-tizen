@@ -166,7 +166,7 @@ const Views = {
       document.getElementById('cancelAddHost').click();
     },
     down: function() {
-      document.getElementById('continueAddHost').focus()
+      document.getElementById('continueAddHost').focus();
     },
     enter: function() {
       mark(this.view.current());
