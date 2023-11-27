@@ -339,12 +339,7 @@ function addHost() {
   // try to pair if they continue
   $('#continueAddHost').off('click');
   $('#continueAddHost').on('click', function() {
-	var ipPart1 = $('#ipPart1').val();
-	var ipPart2 = $('#ipPart2').val();
-	var ipPart3 = $('#ipPart3').val();
-	var ipPart4 = $('#ipPart4').val();
-
-	var inputHost = ipPart1 + '.' + ipPart2 + '.' + ipPart3 + '.' + ipPart4;
+    var inputHost = $('#dialogInputHost').val();
     var _nvhttpHost = new NvHTTP(inputHost, myUniqueid, inputHost);
 
     _nvhttpHost.refreshServerInfoAtAddress(inputHost).then(function(success) {
