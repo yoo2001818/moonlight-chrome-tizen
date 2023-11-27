@@ -171,19 +171,21 @@
       <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect" id="continueDeleteHost">Yes</button>
     </div>
   </dialog>
-  <dialog id="addHostDialog" class="mdl-dialog">
-    <h3 class="mdl-dialog__title">Add Host Manually</h3>
-    <div class="mdl-dialog__content">
-      <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
-        <input class="mdl-textfield__input" type="text" id="dialogInputHost" />
-        <label class="mdl-textfield__label" for="dialogInputHost">IP address of host PC</label>
-      </div>
-    </div>
-    <div class="mdl-dialog__actions">
-      <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect" id="cancelAddHost">Cancel</button>
-      <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect" id="continueAddHost">Continue</button>
-    </div>
-  </dialog>
+	<dialog id="addHostDialog" class="mdl-dialog">
+	  <h3 class="mdl-dialog__title">Add Host Manually</h3>
+	  <div class="mdl-dialog__content">
+	    <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
+		  <select id="ipPart1" name="ipPart1" style="width: 50px;" tabindex="-1"></select>
+		  <select id="ipPart2" name="ipPart2" style="width: 50px;" tabindex="-1"></select>
+		  <select id="ipPart3" name="ipPart3" style="width: 50px;" tabindex="-1"></select>
+		  <select id="ipPart4" name="ipPart4" style="width: 50px;" tabindex="-1"></select>
+		</div>
+	  </div>
+	  <div class="mdl-dialog__actions">
+	    <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect" id="cancelAddHost">Cancel</button>
+	    <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect" id="continueAddHost">Continue</button>
+	  </div>
+	</dialog>
   <dialog id="terminateMoonlightDialog" class="mdl-dialog">
     <h3 class="mdl-dialog__title">Exit Moonlight</h3>
     <div class="mdl-dialog__content">
@@ -202,5 +204,29 @@
     <!-- This button exists to suppress the snackbar warning, we're really using a toast -->
   </div>
   <video id='nacl_module' autoplay tabindex="-1"></video>
+  <script>
+  // small script to populate ipPart
+  function populateSelect(element, start, end, selectedValue) {
+    for (let i = start; i <= end; i++) {
+      const option = document.createElement('option');
+      option.value = i;
+      option.text = i;
+      if (i === selectedValue) {
+        option.selected = true;
+      }
+      element.appendChild(option);
+    }
+  }
+
+  const ipPart1 = document.getElementById('ipPart1');
+  const ipPart2 = document.getElementById('ipPart2');
+  const ipPart3 = document.getElementById('ipPart3');
+  const ipPart4 = document.getElementById('ipPart4');
+
+  populateSelect(ipPart1, 0, 255, 192);
+  populateSelect(ipPart2, 0, 255, 168);
+  populateSelect(ipPart3, 0, 255);
+  populateSelect(ipPart4, 0, 255);
+</script>
 </body>
 </html>

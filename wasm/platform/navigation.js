@@ -77,6 +77,26 @@ class ListView {
 	  current() {
 	    return this.func()[this.index];
 	  }
+	  navigateDigits(direction) {
+		    const currentElement = this.func()[this.index];
+		    const currentId = currentElement.id;
+
+		    // Check if the current element is a digit select element
+		    if (currentId && currentId.startsWith('ipPart')) {
+		      const digitIndex = parseInt(currentId.slice(-1), 10);
+		      const nextDigitIndex = digitIndex + direction;
+
+		      if (nextDigitIndex >= 1 && nextDigitIndex <= 3) {
+		        // Update the id to the next digit and focus on it
+		        const nextDigitId = `${currentId.slice(0, -1)}${nextDigitIndex}`;
+		        unmark(currentElement);
+		        mark(document.getElementById(nextDigitId));
+		        return nextDigitId;
+		      }
+		    }
+
+		    return currentId;
+		  }
 	}
 
 
@@ -147,34 +167,49 @@ const Views = {
     },
   },
   AddHostDialog: {
-    view: new ListView(() => [
-      'dialogInputHost',
-      'continueAddHost',
-      'cancelAddHost']),
-    left: function() {
-      this.view.prev();
-      document.getElementById(this.view.current()).focus();
-    },
-    right: function() {
-      this.view.next();
-      document.getElementById(this.view.current()).focus();
-    },
-    accept: function() {
-      document.getElementById(this.view.current()).click();
-    },
-    back: function() {
-      document.getElementById('cancelAddHost').click();
-    },
-    down: function() {
-      document.getElementById('continueAddHost').focus();
-    },
-    enter: function() {
-      mark(this.view.current());
-    },
-    leave: function() {
-      unmark(this.view.current());
-    },
-  },
+	  view: new ListView(() => [
+	    'ipPart1', 'ipPart2', 'ipPart3', 'ipPart4',
+	    'continueAddHost', 'cancelAddHost'
+	  ]),
+	  left: function() {
+	      document.getElementById(this.view.prev()).focus();
+	  },
+	  right: function() {
+		  document.getElementById(this.view.next()).focus();
+	  },
+	  up: function () {
+	    const currentId = this.view.current();
+	    if (currentId.startsWith('ipPart')) {
+	      const digitElement = document.getElementById(currentId);
+	      const currentValue = parseInt(digitElement.value, 10);
+	      if (currentValue < 255) {
+	        digitElement.value = currentValue + 1;
+	      }
+	    }
+	  },
+	  down: function () {
+	    const currentId = this.view.current();
+	    if (currentId.startsWith('ipPart')) {
+	      const digitElement = document.getElementById(currentId);
+	      const currentValue = parseInt(digitElement.value, 10);
+	      if (currentValue > 0) {
+	        digitElement.value = currentValue - 1;
+	      }
+	    }
+	  },
+	  accept: function () {
+	    document.getElementById(this.view.current()).click();
+	  },
+	  back: function () {
+	    document.getElementById('cancelAddHost').click();
+	  },
+	  enter: function () {
+	    mark(this.view.current());
+	  },
+	  leave: function () {
+	    unmark(this.view.current());
+	  },
+	},
   DeleteHostDialog: {
     view: new ListView(() => [
       'continueDeleteHost',
