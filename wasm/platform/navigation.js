@@ -148,16 +148,17 @@ const Views = {
   },
   AddHostDialog: {
     view: new ListView(() => [
-      'dialogInputHost',
+      'ipPart1',
+      'ipPart2',
+      'ipPart3',
+      'ipPart4',
       'continueAddHost',
       'cancelAddHost']),
     left: function() {
-      this.view.prev();
-      document.getElementById(this.view.current()).focus();
+      document.getElementById(this.view.prev()).focus();
     },
     right: function() {
-      this.view.next();
-      document.getElementById(this.view.current()).focus();
+      document.getElementById(this.view.next()).focus();
     },
     accept: function() {
       document.getElementById(this.view.current()).click();
