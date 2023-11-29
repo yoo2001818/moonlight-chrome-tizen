@@ -167,10 +167,13 @@ const Views = {
     },
   },
   AddHostDialog: {
-	  view: new ListView(() => [
-	    'ipPart1', 'ipPart2', 'ipPart3', 'ipPart4',
-	    'continueAddHost', 'cancelAddHost'
-	  ]),
+	  view: new ListView(() => {
+	  	if (document.getElementById('manualInputToggle').checked) {
+	  		return ['manualInputToggle', 'manualIPAddress', 'continueAddHost', 'cancelAddHost'];
+	  	  } else {
+	  	  	return ['manualInputToggle','ipPart1', 'ipPart2', 'ipPart3', 'ipPart4', 'continueAddHost', 'cancelAddHost'];
+          }
+	  }),
 	  left: function() {
 	      document.getElementById(this.view.prev()).focus();
 	  },
@@ -199,6 +202,9 @@ const Views = {
 	  },
 	  accept: function () {
 	    document.getElementById(this.view.current()).click();
+	  },
+	  selectBtn: function () {
+		document.getElementById('manualInputToggle').click();
 	  },
 	  back: function () {
 	    document.getElementById('cancelAddHost').click();
