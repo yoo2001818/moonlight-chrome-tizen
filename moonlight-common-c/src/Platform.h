@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+#include <emscripten.h>
 
 #ifdef _WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -56,11 +57,21 @@
 #include "Limelight.h"
 
 #ifdef LC_LOG
-#define Limelog(s, ...) \
-    if (ListenerCallbacks.logMessage) \
-        ListenerCallbacks.logMessage(s, ##__VA_ARGS__)
+#define Limelog(format, ...) \
+    do { \
+        if (ListenerCallbacks.logMessage) { \
+            char buf[1000]; \
+            snprintf(buf, sizeof(buf), format, ##__VA_ARGS__); \
+            ListenerCallbacks.logMessage(buf); \
+        } \
+    } while(0)
 #else
-#define Limelog(s, ...)
+#define Limelog(format, ...) \
+    do { \
+        if (EM_LOG_CONSOLE) { \
+            emscripten_log(EM_LOG_CONSOLE, format, ##__VA_ARGS__); \
+        } \
+    } while(0)
 #endif
 
 #if defined(LC_WINDOWS)

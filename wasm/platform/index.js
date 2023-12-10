@@ -339,7 +339,17 @@ function addHost() {
   // try to pair if they continue
   $('#continueAddHost').off('click');
   $('#continueAddHost').on('click', function() {
-    var inputHost = $('#dialogInputHost').val();
+	var inputHost;
+	if ($('#manualInputToggle').prop('checked')) {
+	      // Manual input is selected
+	      inputHost = $('#manualIPAddress').val();
+  } else {
+	var ipPart1 = $('#ipPart1').val();
+	var ipPart2 = $('#ipPart2').val();
+	var ipPart3 = $('#ipPart3').val();
+	var ipPart4 = $('#ipPart4').val();
+	inputHost = ipPart1 + '.' + ipPart2 + '.' + ipPart3 + '.' + ipPart4;
+  }
     var _nvhttpHost = new NvHTTP(inputHost, myUniqueid, inputHost);
 
     _nvhttpHost.refreshServerInfoAtAddress(inputHost).then(function(success) {
@@ -1235,9 +1245,6 @@ function initSamsungKeys() {
       //'SmartHub',      // F5
       'Source',        // F6
       'ChannelList',   // F7
-      'VolumeMute',    // F8
-      'VolumeDown',    // F9
-      'VolumeUp',      // F10
       'ChannelDown',   // F11
       'ChannelUp',     // F12
     ],
@@ -1420,7 +1427,7 @@ window.addEventListener('gamepadconnected', function(event) {
         const startDelay = 0;
         const duration = 200; // in milliseconds
         const weakMagnitude = 0.5;
-        const strongMagnitude = 0.5; 
+        const strongMagnitude = 0.5;
 
         // Play the dual-rumble effect
         connectedGamepad.vibrationActuator.playEffect('dual-rumble', {

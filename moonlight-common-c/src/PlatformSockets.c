@@ -511,6 +511,14 @@ int resolveHostName(const char* host, int family, int tcpTestPort, struct sockad
     hints.ai_flags = AI_ADDRCONFIG;
     hints.ai_socktype = SOCK_STREAM;
     hints.ai_protocol = IPPROTO_TCP;
+
+    char hostWithoutBrackets[INET6_ADDRSTRLEN];
+    if (host[0] == '[' && host[strlen(host) - 1] == ']') {
+      strncpy(hostWithoutBrackets, host + 1, strlen(host) - 2);
+      hostWithoutBrackets[strlen(host) - 2] = '\0';
+      host = hostWithoutBrackets;
+    }
+    
     err = getaddrinfo(host, NULL, &hints, &res);
     if (err != 0) {
         Limelog("getaddrinfo(%s) failed: %d\n", host, err);

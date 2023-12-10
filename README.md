@@ -12,7 +12,7 @@ Please be aware that my fixes may not be optimal, and there might be better ways
 
 ## Getting Started
 
-Starting with the project, you should first take a look at the required [Prerequisites](https://github.com/ndriqimlahu/moonlight-chrome-tizen#prerequisites) and then follow the [Installation](https://github.com/ndriqimlahu/moonlight-chrome-tizen#installation) instructions in order to successfully install Moonlight on your Samsung Smart TV.
+Starting with the project, you should first take a look at the required [Prerequisites](https://github.com/OneLiberty/moonlight-chrome-tizen#prerequisites) and then follow the [Installation](https://github.com/OneLiberty/moonlight-chrome-tizen#installation) instructions in order to successfully install Moonlight on your Samsung Smart TV.
 
 ### Prerequisites
 
