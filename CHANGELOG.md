@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## v1.1.0
+
+### Added
+- Host deletion from the gamepad (press start while hovering over the host to delete it).
+- Temporary workaround for the keyboard disappearing issue in Tizen 7.0.
+- Mouse support for 2021+ TVs 
+
+### Changed
+- Fixed rumble on tizen 5.5 and 6.0 
+- Improved controller navigation within the app.
+- Fixed  IPV6 host resolution (removed [] bracked from the ip in the host resolution sequence)
+- Various minor fixes.
+
 ## v1.0.8
 
 ### Added

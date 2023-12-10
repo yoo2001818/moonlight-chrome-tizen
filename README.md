@@ -5,6 +5,11 @@ Moonlight for Tizen allows you to stream your full collection of games from your
 
 Check out the [Moonlight wiki](https://github.com/moonlight-stream/moonlight-docs/wiki) for more detailed project information, setup guide, or troubleshooting steps.
 
+### Small note
+I am not a developer, and my knowledge of coding is limited. I am putting in my best effort to address issues and maintain the repository. If you encounter any problems, please report them in the issue section. While I cannot guarantee a solution, I will certainly investigate.
+
+Please be aware that my fixes may not be optimal, and there might be better ways to resolve issues. I appreciate your understanding as I do my best to improve the application.
+
 ## Getting Started
 
 Starting with the project, you should first take a look at the required [Prerequisites](https://github.com/ndriqimlahu/moonlight-chrome-tizen#prerequisites) and then follow the [Installation](https://github.com/ndriqimlahu/moonlight-chrome-tizen#installation) instructions in order to successfully install Moonlight on your Samsung Smart TV.
@@ -24,7 +29,7 @@ Also, you should run "Docker Desktop" before proceeding further and it is also r
 	- Depending on your model, a `DEVELOP MODE` or similar message will appear in the `Apps` panel at the top of the screen.
 2. After that, in `Windows PowerShell`, enter the following command to launch the "Docker" image:
 	```
-	docker run -it --rm ghcr.io/kyrofrcode/moonlight-chrome-tizen:samsung_wasm
+	docker run -it --rm ghcr.io/oneliberty/moonlight-chrome-tizen:samsung_wasm
 	```
 	- This operation may take a while, please be patient.
 3. After that, in `Windows PowerShell`, follow the steps below to install the application on your TV:
@@ -82,4 +87,4 @@ Also, if you liked the project or found it useful, don't forget to give the proj
 - Moonlight for Tizen is based on Chrome OS version which was then adapted and powered by [Samsung Developers](https://github.com/SamsungDForum/moonlight-chrome)
 - Support files and Dockerfile have been adapted by [jellyfin](https://github.com/jellyfin/jellyfin-tizen) and [babagreensheep](https://github.com/babagreensheep/jellyfin-tizen-docker)
 - Dockerfile have been readapted by [pablojrl123](https://github.com/pablojrl123/moonlight-tizen-docker)
-- Some content files have been readapted by [ndriqimlahu]
+- Some content files have been readapted by [ndriqimlahu](https://github.com/ndriqimlahu)
