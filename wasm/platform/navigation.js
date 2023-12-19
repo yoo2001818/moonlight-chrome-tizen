@@ -146,7 +146,8 @@ const Views = {
       'externalAudioBtn',
       'optimizeGamesBtn',
       'framePacingBtn',
-      'audioSyncBtn']),
+      'audioSyncBtn',
+      'hdrBtn']),
     left: function() {
       this.view.prev();
     },

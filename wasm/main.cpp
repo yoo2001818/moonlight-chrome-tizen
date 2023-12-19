@@ -176,7 +176,7 @@ MessageResult MoonlightInstance::StartStream(
 std::string host, std::string width, std::string height, std::string fps,
 std::string bitrate, std::string rikey, std::string rikeyid,
 std::string appversion, std::string gfeversion, bool framePacing,
-bool audioSync) {
+bool audioSync, bool hdrEnabled) {
   PostToJs("Setting stream width to: " + width);
   PostToJs("Setting stream height to: " + height);
   PostToJs("Setting stream fps to: " + fps);
@@ -188,6 +188,7 @@ bool audioSync) {
   PostToJs("Setting gfeversion to: " + gfeversion);
   PostToJs("Setting frame pacing to: " + std::to_string(framePacing));
   PostToJs("Setting audio syncing to: " + std::to_string(audioSync));
+  PostToJs("Setting HDR to:" + std::to_string(hdrEnabled));
 
   // Populate the stream configuration
   LiInitializeStreamConfiguration(&m_StreamConfig);
@@ -199,7 +200,7 @@ bool audioSync) {
   m_StreamConfig.streamingRemotely = STREAM_CFG_AUTO;
   m_StreamConfig.packetSize = 1392;
   m_StreamConfig.supportsHevc = true;
-  //m_StreamConfig.enableHdr = true;
+  m_StreamConfig.enableHdr = hdrEnabled;
 
   // Load the rikey and rikeyid into the stream configuration
   HexStringToBytes(rikey.c_str(), m_StreamConfig.remoteInputAesKey);
@@ -212,7 +213,7 @@ bool audioSync) {
   m_GfeVersion = gfeversion;
   m_FramePacingEnabled = framePacing;
   m_AudioSyncEnabled = audioSync;
-
+  m_HdrEnabled = hdrEnabled;
   // Initialize the rendering surface before starting the connection
   if (InitializeRenderingSurface(m_StreamConfig.width, m_StreamConfig.height)) {
     // Start the worker thread to establish the connection
@@ -310,10 +311,10 @@ int main(int argc, char** argv) {
 MessageResult startStream(std::string host, std::string width,
 std::string height, std::string fps, std::string bitrate, std::string rikey,
 std::string rikeyid, std::string appversion, std::string gfeversion, bool framePacing,
-bool audioSync) {
+bool audioSync, bool hdrEnabled) {
   printf("%s host: %s w: %s h: %s\n", __func__, host.c_str(), width.c_str(), height.c_str());
   return g_Instance->StartStream(host, width, height, fps, bitrate, rikey,
-  rikeyid, appversion, gfeversion, framePacing, audioSync);
+  rikeyid, appversion, gfeversion, framePacing, audioSync, hdrEnabled);
 }
 
 MessageResult stopStream() { return g_Instance->StopStream(); }

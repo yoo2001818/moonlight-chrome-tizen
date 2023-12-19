@@ -19,6 +19,7 @@ function attachListeners() {
   $('#optimizeGamesSwitch').on('click', saveOptimize);
   $('#framePacingSwitch').on('click', saveFramePacing);
   $('#audioSyncSwitch').on('click', saveAudioSync);
+  $('#hdrSwitch').on('click', saveHdr);
   $('#addHostCell').on('click', addHost);
   $('#backIcon').on('click', showHostsAndSettingsMode);
   $('#quitCurrentApp').on('click', stopGameWithConfirmation);
@@ -766,6 +767,7 @@ function startGame(host, appID) {
       var bitrate = parseInt($("#bitrateSlider").val()) * 1000;
       const framePacingEnabled = $('#framePacingSwitch').parent().hasClass('is-checked') ? 1 : 0;
       const audioSyncEnabled = $('#audioSyncSwitch').parent().hasClass('is-checked') ? 1 : 0;
+      const hdrEnabled = $('#hdrSwitch').parent().hasClass('is-checked') ? 1 : 0;
       console.log('%c[index.js, startGame]', 'color:green;',
                   'startRequest:' + host.address +
                   ":" + streamWidth +
@@ -774,7 +776,8 @@ function startGame(host, appID) {
                   ":" + bitrate +
                   ":" + optimize +
                   ":" + framePacingEnabled,
-                  ":" + audioSyncEnabled);
+                  ":" + audioSyncEnabled,
+                  ":" + hdrEnabled);
 
       var rikey = generateRemoteInputKey();
       var rikeyid = generateRemoteInputKeyId();
@@ -807,7 +810,8 @@ function startGame(host, appID) {
             host.appVersion,
             /*host.gfeVersion*/"",
             framePacingEnabled,
-            audioSyncEnabled
+            audioSyncEnabled,
+            hdrEnabled
           ]);
         }, function(failedResumeApp) {
           console.error('%c[index.js, startGame]', 'color:green;', 'Failed to resume the app! Returned error was' + failedResumeApp);
@@ -846,7 +850,8 @@ function startGame(host, appID) {
           host.appVersion,
           "",
           framePacingEnabled,
-          audioSyncEnabled
+          audioSyncEnabled,
+          hdrEnabled
         ]);
       }, function(failedLaunchApp) {
         console.error('%c[index.js, launchApp]', 'color: green;', 'Failed to launch app width id: ' + appID + '\nReturned error was: ' + failedLaunchApp);
@@ -1150,6 +1155,14 @@ function saveFramePacing() {
   }, 100);
 }
 
+function saveHdr() {
+  setTimeout(function() {
+    const chosenHDR = $("#hdrSwitch").parent().hasClass('is-checked');
+    console.log('%c[index.js, saveHDR]', 'color: green;', 'Saving HDR state : ' + chosenHDR);
+    storeData('HDR', chosenHDR, null);
+  }, 100);
+}
+
 function saveAudioSync() {
   setTimeout(function() {
     const chosenAudioSync = $("#audioSyncSwitch").parent().hasClass('is-checked');
@@ -1317,6 +1330,17 @@ function loadUserDataCb() {
       document.querySelector('#framePacingBtn').MaterialIconToggle.uncheck();
     } else {
       document.querySelector('#framePacingBtn').MaterialIconToggle.check();
+    }
+  });
+
+  console.log('load stored HDR prefs');
+  getData('HDR', function(previousValue) {
+    if (previousValue.HDR == null) {
+      document.querySelector('#hdrBtn').MaterialIconToggle.check();
+    } else if (previousValue.HDR == false) {
+      document.querySelector('#hdrBtn').MaterialIconToggle.uncheck();
+    } else {
+      document.querySelector('#hdrBtn').MaterialIconToggle.check();
     }
   });
 
