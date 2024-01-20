@@ -33,7 +33,7 @@ DWORD (WINAPI *pfnWlanSetInterface)(HANDLE hClientHandle, CONST GUID *pInterface
 
 #endif
 
-void addrToUrlSafeString(struct sockaddr_storage* addr, char* string)
+void addrToUrlSafeString(struct sockaddr_storage* addr, char* string, size_t stringLength)
 {
     char addrstr[URLSAFESTRING_LEN];
 
@@ -43,7 +43,7 @@ void addrToUrlSafeString(struct sockaddr_storage* addr, char* string)
         inet_ntop(addr->ss_family, &sin6->sin6_addr, addrstr, sizeof(addrstr));
 
         // IPv6 addresses need to be enclosed in brackets for URLs
-        sprintf(string, "[%s]", addrstr);
+        snprintf(string, stringLength, "[%s]", addrstr);
     }
     else
 #endif
@@ -52,7 +52,7 @@ void addrToUrlSafeString(struct sockaddr_storage* addr, char* string)
         inet_ntop(addr->ss_family, &sin->sin_addr, addrstr, sizeof(addrstr));
 
         // IPv4 addresses are returned without changes
-        sprintf(string, "%s", addrstr);
+        snprintf(string, stringLength, "%s", addrstr);
     }
 }
 
@@ -86,7 +86,7 @@ int setNonFatalRecvTimeoutMs(SOCKET s, int timeoutMs) {
 }
 
 int pollSockets(struct pollfd* pollFds, int pollFdsCount, int timeoutMs) {
-#if defined(LC_WINDOWS) || defined(__vita__)
+#if defined(LC_WINDOWS)
     // We could have used WSAPoll() but it has some nasty bugs
     // https://daniel.haxx.se/blog/2012/10/10/wsapoll-is-broken/
     //
@@ -111,19 +111,10 @@ int pollSockets(struct pollfd* pollFds, int pollFdsCount, int timeoutMs) {
         if (pollFds[i].events & POLLOUT) {
             FD_SET(pollFds[i].fd, &writeFds);
 
-#ifdef LC_WINDOWS
             // Windows signals failed connections as an exception,
             // while Linux signals them as writeable.
             FD_SET(pollFds[i].fd, &exceptFds);
-#endif
         }
-        
-#ifndef LC_WINDOWS
-	// nfds is unused on Windows
-        if (pollFds[i].fd >= nfds) {
-            nfds = pollFds[i].fd + 1;
-        }
-#endif
     }
 
     tv.tv_sec = timeoutMs / 1000;
@@ -168,17 +159,17 @@ bool isSocketReadable(SOCKET s) {
 
     return true;
 }
-
 int recvUdpSocket(SOCKET s, char* buffer, int size, bool useSelect) {
     int err;
-    
+
     do {
         if (useSelect) {
+            // Use poll to check if the socket is readable
             struct pollfd pfd;
-
-            // Wait up to 100 ms for the socket to be readable
             pfd.fd = s;
             pfd.events = POLLIN;
+
+            // Wait up to 100 ms for the socket to be readable
             err = pollSockets(&pfd, 1, UDP_RECV_POLL_TIMEOUT_MS);
             if (err <= 0) {
                 // Return if an error or timeout occurs
@@ -187,34 +178,40 @@ int recvUdpSocket(SOCKET s, char* buffer, int size, bool useSelect) {
 
             // This won't block since the socket is readable
             err = (int)recvfrom(s, buffer, size, 0, NULL, NULL);
-        }
-        else {
-            // The caller has already configured a timeout on this
-            // socket via SO_RCVTIMEO, so we can avoid a syscall
-            // for each packet.
+        } else {
+            // The caller has already configured a timeout on this socket via SO_RCVTIMEO,
+            // so we can avoid a syscall for each packet.
             err = (int)recvfrom(s, buffer, size, 0, NULL, NULL);
-            if (err < 0 &&
+
+            // Handle errors and timeouts
+            if (err < 0) {
 #if defined(__EMSCRIPTEN__)
-// Temporary workaround - with newer Emscripten, errno codes are not
-// compatible with POSIX ones
-// TODO(j.gajownik2) Define mapping errno mapping WASI -> POSIX
-                    (LastSocketError() == __WASI_ERRNO_AGAIN ||
-                     LastSocketError() == __WASI_ERRNO_INTR ||
-                     LastSocketError() == __WASI_ERRNO_TIMEDOUT)) {
+                // Handle Emscripten-specific errors
+                if (LastSocketError() == __WASI_ERRNO_AGAIN ||
+                    LastSocketError() == __WASI_ERRNO_INTR ||
+                    LastSocketError() == __WASI_ERRNO_TIMEDOUT) {
+                    // Return 0 for timeout
+                    return 0;
+                }
 #else
-                    (LastSocketError() == EWOULDBLOCK ||
-                     LastSocketError() == EINTR ||
-                     LastSocketError() == EAGAIN ||
-                     LastSocketError() == ETIMEDOUT)) {
+                // Handle other platforms' errors and timeouts
+                if (LastSocketError() == EWOULDBLOCK ||
+                    LastSocketError() == EINTR ||
+                    LastSocketError() == EAGAIN ||
+#if defined(LC_WINDOWS)
+                    // This error is specific to overlapped I/O
+                    // It seems to randomly be returned instead of WSAETIMEDOUT on certain systems.
+                    LastSocketError() == WSA_IO_PENDING ||
 #endif
-                // Return 0 for timeout
-                return 0;
+                    LastSocketError() == ETIMEDOUT) {
+                    // Return 0 for timeout
+                    return 0;
+                }
+#endif
             }
         }
 
-    // We may receive an error due to a previous ICMP Port Unreachable error received
-    // by this socket. We want to ignore those and continue reading. If the remote party
-    // is really dead, ENet or TCP connection failures will trigger connection teardown.
+        // Handle specific errors for different platforms in a loop
 #if defined(LC_WINDOWS)
     } while (err < 0 && LastSocketError() == WSAECONNRESET);
 #elif defined(__EMSCRIPTEN__)
@@ -234,28 +231,36 @@ void closeSocket(SOCKET s) {
 #endif
 }
 
-SOCKET bindUdpSocket(int addrfamily, int bufferSize) {
+SOCKET bindUdpSocket(int addressFamily, struct sockaddr_storage* localAddr, SOCKADDR_LEN addrLen, int bufferSize) {
     SOCKET s;
-    struct sockaddr_storage addr;
+    LC_SOCKADDR bindAddr;
     int err;
-    SOCKADDR_LEN addrLen;
 
-#ifdef AF_INET6
-    LC_ASSERT(addrfamily == AF_INET || addrfamily == AF_INET6);
-    addrLen = (addrfamily == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
-#else
-    LC_ASSERT(addrfamily == AF_INET);
-    addrLen = sizeof(struct sockaddr_in);
-#endif
-
-    s = createSocket(addrfamily, SOCK_DGRAM, IPPROTO_UDP, false);
+    s = createSocket(addressFamily, SOCK_DGRAM, IPPROTO_UDP, false);
     if (s == INVALID_SOCKET) {
         return INVALID_SOCKET;
     }
 
-    memset(&addr, 0, sizeof(addr));
-    addr.ss_family = addrfamily;
-    if (bind(s, (struct sockaddr*) &addr, addrLen) == SOCKET_ERROR) {
+    // Use localAddr to bind if it was provided
+    if (localAddr && localAddr->ss_family != 0) {
+        memcpy(&bindAddr, localAddr, addrLen);
+        SET_PORT(&bindAddr, 0);
+    }
+    else {
+        // Otherwise wildcard bind to the specified address family
+        memset(&bindAddr, 0, sizeof(bindAddr));
+        SET_FAMILY(&bindAddr, addressFamily);
+
+#ifdef AF_INET6
+        LC_ASSERT(addressFamily == AF_INET || addressFamily == AF_INET6);
+        addrLen = (addressFamily == AF_INET ? sizeof(struct sockaddr_in) : sizeof(struct sockaddr_in6));
+#else
+        LC_ASSERT(addressFamily == AF_INET);
+        addrLen = sizeof(struct sockaddr_in);
+#endif
+    }
+
+    if (bind(s, (struct sockaddr*) &bindAddr, addrLen) == SOCKET_ERROR) {
         err = LastSocketError();
         Limelog("bind() failed: %d\n", err);
         closeSocket(s);
@@ -280,36 +285,45 @@ SOCKET bindUdpSocket(int addrfamily, int bufferSize) {
     }
 #endif
 
-    // We start at the requested recv buffer value and step down until we find
-    // a value that the OS will accept.
-    for (;;) {
-        err = setsockopt(s, SOL_SOCKET, SO_RCVBUF, (char*)&bufferSize, sizeof(bufferSize));
+    if (bufferSize != 0) {
+        // We start at the requested recv buffer value and step down until we find
+        // a value that the OS will accept.
+        for (;;) {
+            err = setsockopt(s, SOL_SOCKET, SO_RCVBUF, (char*)&bufferSize, sizeof(bufferSize));
+            if (err == 0) {
+                // Successfully set a buffer size
+                break;
+            }
+            else if (bufferSize <= RCV_BUFFER_SIZE_MIN) {
+                // Failed to set a buffer size within the allowable range
+                break;
+            }
+            else if (bufferSize - RCV_BUFFER_SIZE_STEP <= RCV_BUFFER_SIZE_MIN) {
+                // Last shot - we're trying the minimum
+                bufferSize = RCV_BUFFER_SIZE_MIN;
+            }
+            else {
+                // Lower the requested size by another step
+                bufferSize -= RCV_BUFFER_SIZE_STEP;
+            }
+        }
+
+#if defined(LC_DEBUG)
         if (err == 0) {
-            // Successfully set a buffer size
-            break;
-        }
-        else if (bufferSize <= RCV_BUFFER_SIZE_MIN) {
-            // Failed to set a buffer size within the allowable range
-            break;
-        }
-        else if (bufferSize - RCV_BUFFER_SIZE_STEP <= RCV_BUFFER_SIZE_MIN) {
-            // Last shot - we're trying the minimum
-            bufferSize = RCV_BUFFER_SIZE_MIN;
+            Limelog("Selected receive buffer size: %d\n", bufferSize);
         }
         else {
-            // Lower the requested size by another step
-            bufferSize -= RCV_BUFFER_SIZE_STEP;
+            Limelog("Unable to set receive buffer size: %d\n", LastSocketError());
         }
-    }
-    
-#if defined(LC_DEBUG)
-    if (err == 0) {
-        Limelog("Selected receive buffer size: %d\n", bufferSize);
-    }
-    else {
-        Limelog("Unable to set receive buffer size: %d\n", LastSocketError());
-    }
+
+        {
+            SOCKADDR_LEN len = sizeof(bufferSize);
+            if (getsockopt(s, SOL_SOCKET, SO_RCVBUF, (char*)&bufferSize, &len) == 0) {
+                Limelog("Actual receive buffer size: %d\n", bufferSize);
+            }
+        }
 #endif
+    }
 
     return s;
 }
@@ -425,7 +439,7 @@ SOCKET connectTcpSocket(struct sockaddr_storage* dstaddr, SOCKADDR_LEN addrlen, 
             goto Exit;
         }
     }
-    
+
     // Wait for the connection to complete or the timeout to elapse
     pfd.fd = s;
     pfd.events = POLLOUT;
@@ -457,7 +471,7 @@ SOCKET connectTcpSocket(struct sockaddr_storage* dstaddr, SOCKADDR_LEN addrlen, 
 
     // Disable non-blocking I/O now that the connection is established
     setSocketNonBlocking(s, false);
-    
+
 Exit:
     if (err != 0) {
         Limelog("connect() failed: %d\n", err);
@@ -518,7 +532,7 @@ int resolveHostName(const char* host, int family, int tcpTestPort, struct sockad
       hostWithoutBrackets[strlen(host) - 2] = '\0';
       host = hostWithoutBrackets;
     }
-    
+
     err = getaddrinfo(host, NULL, &hints, &res);
     if (err != 0) {
         Limelog("getaddrinfo(%s) failed: %d\n", host, err);
@@ -528,7 +542,7 @@ int resolveHostName(const char* host, int family, int tcpTestPort, struct sockad
         Limelog("getaddrinfo(%s) returned success without addresses\n", host);
         return -1;
     }
-    
+
     for (currentAddr = res; currentAddr != NULL; currentAddr = currentAddr->ai_next) {
         // Use the test port to ensure this address is working if:
         // a) We have multiple addresses
@@ -546,10 +560,10 @@ int resolveHostName(const char* host, int family, int tcpTestPort, struct sockad
                 closeSocket(testSocket);
             }
         }
-        
+
         memcpy(addr, currentAddr->ai_addr, currentAddr->ai_addrlen);
         *addrLen = (SOCKADDR_LEN)currentAddr->ai_addrlen;
-        
+
         freeaddrinfo(res);
         return 0;
     }
@@ -562,14 +576,14 @@ int resolveHostName(const char* host, int family, int tcpTestPort, struct sockad
 #ifdef AF_INET6
 bool isInSubnetV6(struct sockaddr_in6* sin6, unsigned char* subnet, int prefixLength) {
     int i;
-    
+
     for (i = 0; i < prefixLength; i++) {
         unsigned char mask = 1 << (i % 8);
         if ((sin6->sin6_addr.s6_addr[i / 8] & mask) != (subnet[i / 8] & mask)) {
             return false;
         }
     }
-    
+
     return true;
 }
 #endif
@@ -582,7 +596,7 @@ bool isPrivateNetworkAddress(struct sockaddr_storage* address) {
 
         memcpy(&addr, &((struct sockaddr_in*)address)->sin_addr, sizeof(addr));
         addr = htonl(addr);
-        
+
         // 10.0.0.0/8
         if ((addr & 0xFF000000) == 0x0A000000) {
             return true;
