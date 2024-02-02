@@ -7,6 +7,9 @@ var isInGame = false; // flag indicating whether the game stream started
 var windowState = 'normal'; // chrome's windowState, possible values: 'normal' or 'fullscreen'
 var isDialogOpen = false; // track whether the dialog is open
 
+let repeatInterval;
+let repeatTimeout;
+
 // Called by the common.js module.
 function attachListeners() {
   changeUiModeForNaClLoad();
@@ -46,23 +49,39 @@ function attachListeners() {
     const pressed = e.detail.pressed;
     const key = e.detail.key;
 
-    if (!pressed)
-        return;
+    if (pressed) {
+        const gamepadMapping = {
+            0: () => Navigation.accept(),
+            1: () => Navigation.back(),
+            8: () => Navigation.selectBtn(),
+            9: () => Navigation.startBtn(),
+            12: () => startRepeatAction(() => Navigation.up()),
+            13: () => startRepeatAction(() => Navigation.down()),
+            14: () => Navigation.left(),
+            15: () => Navigation.right(),
+        };
 
-    const gamepadMapping = {
-      0: () => Navigation.accept(),
-      1: () => Navigation.back(),
-      8: () => Navigation.selectBtn(),
-      9: () => Navigation.startBtn(),
-      12: () => Navigation.up(),
-      13: () => Navigation.down(),
-      14: () => Navigation.left(),
-      15: () => Navigation.right(),
-    };
-    if (gamepadMapping[key]) {
-      gamepadMapping[key]();
+        if (gamepadMapping[key]) {
+            gamepadMapping[key]();
+        }
+    } else {
+        stopRepeatAction();
     }
   });
+}
+
+function startRepeatAction(actionFunction) {
+    clearTimeout(repeatTimeout);
+    actionFunction();
+    repeatTimeout = setTimeout(() => {
+        actionFunction();
+        repeatInterval = setInterval(actionFunction, 100);
+    }, 350);
+}
+
+function stopRepeatAction() {
+    clearInterval(repeatInterval);
+    clearTimeout(repeatTimeout);
 }
 
 function fullscreenChromeWindow() {
