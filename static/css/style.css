@@ -336,7 +336,7 @@ main {
     color: #fff;
 }
 #pairingDialogText, #quitAppDialogText,
-#deleteHostDialogText, #terminateMoonlightDialogText {
+#deleteHostDialogText, #restartMoonlightDialogText, #terminateMoonlightDialogText {
     font-size: 1.1rem;
 }
 #continueAddHost {

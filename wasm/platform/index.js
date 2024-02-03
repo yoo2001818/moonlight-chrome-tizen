@@ -23,6 +23,7 @@ function attachListeners() {
   $('#framePacingSwitch').on('click', saveFramePacing);
   $('#audioSyncSwitch').on('click', saveAudioSync);
   $('#hdrSwitch').on('click', saveHdr);
+  $('.codecVideoMenu li').on('click', saveCodecVideo);													  
   $('#addHostCell').on('click', addHost);
   $('#backIcon').on('click', showHostsAndSettingsMode);
   $('#quitCurrentApp').on('click', stopGameWithConfirmation);
@@ -35,6 +36,7 @@ function attachListeners() {
         Navigation.push(view);
     });
   }
+  registerMenu('selectCodecVideo', Views.SelectCodecVideoMenu);															   
   registerMenu('selectResolution', Views.SelectResolutionMenu);
   registerMenu('selectFramerate', Views.SelectFramerateMenu);
   registerMenu('bandwidthMenu', Views.SelectBitrateMenu);
@@ -482,6 +484,55 @@ function removeClicked(host) {
 
 window.removeClicked = removeClicked;
 
+// Function to create and show the Restart Moonlight dialog
+function showRestartMoonlightDialog() {
+	// Find the existing dialog element
+  var restartMoonlightDialog = document.querySelector('#restartMoonlightDialog');
+  
+    if (!restartMoonlightDialog) {
+    // If the dialog element doesn't exist, create it
+    var restartMoonlightDialog = document.createElement('dialog');
+    restartMoonlightDialog.id = 'restartMoonlightDialog';
+    restartMoonlightDialog.classList.add('mdl-dialog');
+
+    // Create the dialog content
+    restartMoonlightDialog.innerHTML = `
+      <h3 class="mdl-dialog__title">Restart Moonlight</h3>
+      <div class="mdl-dialog__content">
+      <p id="restartMoonlightDialogText">
+        After changing video codec, you should restart the application
+      </p>
+      </div>
+      <div class="mdl-dialog__actions">
+      <button type="button" class="mdl-button mdl-js-button mdl-button--raised mdl-button--colored mdl-js-ripple-effect" id="pressOK">OK</button>
+      </div>
+    `;
+
+    // Append the dialog to the DOM
+    document.body.appendChild(restartMoonlightDialog);
+
+    // Initialize the dialog
+    componentHandler.upgradeElements(restartMoonlightDialog);
+  }
+
+  // Show the dialog and push the view
+  restartMoonlightDialog.showModal();
+  Navigation.push(Views.RestartMoonlightDialog);
+
+  // Set the dialog as open
+  isDialogOpen = true;
+
+  // Close the dialog if the OK button is pressed
+  $('#pressOK').off('click');
+  $('#pressOK').on('click', function() {
+    restartMoonlightDialog.close();
+    // Remove the dialog from the DOM if the dialog is open
+    document.body.removeChild(restartMoonlightDialog);
+    isDialogOpen = false;
+    Navigation.pop();
+  });
+}
+	
 // Function to create and show the Terminate Moonlight dialog
 function showTerminateMoonlightDialog() {
   // Find the existing dialog element
@@ -779,6 +830,7 @@ function startGame(host, appID) {
       }
 
       var frameRate = $('#selectFramerate').data('value').toString();
+	  var codecVideo = $('#selectCodecVideo').data('value').toString();
       var optimize = $("#optimizeGamesSwitch").parent().hasClass('is-checked') ? 1 : 0;
       var streamWidth = $('#selectResolution').data('value').split(':')[0];
       var streamHeight = $('#selectResolution').data('value').split(':')[1];
@@ -796,7 +848,8 @@ function startGame(host, appID) {
                   ":" + optimize +
                   ":" + framePacingEnabled,
                   ":" + audioSyncEnabled,
-                  ":" + hdrEnabled);
+                  ":" + hdrEnabled,
+                  ":" + codecVideo);
 
       var rikey = generateRemoteInputKey();
       var rikeyid = generateRemoteInputKeyId();
@@ -831,7 +884,8 @@ function startGame(host, appID) {
 			$root.find('sessionUrl0').text().trim(),
 			framePacingEnabled,
             audioSyncEnabled,
-            hdrEnabled
+            hdrEnabled,
+            codecVideo		 
           ]);
         }, function(failedResumeApp) {
           console.error('%c[index.js, startGame]', 'color:green;', 'Failed to resume the app! Returned error was' + failedResumeApp);
@@ -872,7 +926,8 @@ function startGame(host, appID) {
 		  $root.find('sessionUrl0').text().trim(),
           framePacingEnabled,
           audioSyncEnabled,
-          hdrEnabled
+          hdrEnabled,
+          codecVideo			  
         ]);
       }, function(failedLaunchApp) {
         console.error('%c[index.js, launchApp]', 'color: green;', 'Failed to launch app width id: ' + appID + '\nReturned error was: ' + failedLaunchApp);
@@ -1184,6 +1239,13 @@ function saveHdr() {
   }, 100);
 }
 
+function saveCodecVideo() {
+  var chosenCodecVideo = $(this).data('value');
+  $('#selectCodecVideo').text($(this).text()).data('value', chosenCodecVideo);
+  storeData('codecVideo', chosenCodecVideo, null);
+  Navigation.pop();
+}
+
 function saveAudioSync() {
   setTimeout(function() {
     const chosenAudioSync = $("#audioSyncSwitch").parent().hasClass('is-checked');
@@ -1299,6 +1361,17 @@ function loadUserData() {
 }
 
 function loadUserDataCb() {
+  console.log('load stored VideoCodec prefs');
+  getData('codecVideo', function(previousValue) {
+    if (previousValue.codecVideo != null) {
+      $('.codecVideoMenu li').each(function() {
+        if ($(this).data('value') === previousValue.codecVideo) {
+          $('#selectCodecVideo').text($(this).text()).data('value', previousValue.codecVideo);
+        }
+      });
+    }
+  });
+  
   console.log('load stored resolution prefs');
   getData('resolution', function(previousValue) {
     if (previousValue.resolution != null) {
