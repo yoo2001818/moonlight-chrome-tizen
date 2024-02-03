@@ -827,8 +827,9 @@ function startGame(host, appID) {
             rikey,
             rikeyid.toString(),
             host.appVersion,
-            /*host.gfeVersion*/"",
-            framePacingEnabled,
+            "",
+			$root.find('sessionUrl0').text().trim(),
+			framePacingEnabled,
             audioSyncEnabled,
             hdrEnabled
           ]);
@@ -868,6 +869,7 @@ function startGame(host, appID) {
           rikeyid.toString(),
           host.appVersion,
           "",
+		  $root.find('sessionUrl0').text().trim(),
           framePacingEnabled,
           audioSyncEnabled,
           hdrEnabled
