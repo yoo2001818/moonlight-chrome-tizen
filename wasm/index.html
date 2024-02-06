@@ -66,6 +66,19 @@
           </div>
 
           <div class="nav-menu-parent">
+            <div id="codecVideoMenu">
+              <button id="selectCodecVideo" data-value=0x0001 class="mdl-button mdl-js-button">H264</button>
+            </div>
+
+            <ul class="codecVideoMenu mdl-menu mdl-menu--bottom-right mdl-js-menu mdl-js-ripple-effect" for="selectCodecVideo">
+              <li class="mdl-menu__item" data-value=0x0001>H264</li>
+              <li class="mdl-menu__item" data-value=0x0100>HEVC</li>
+              <li class="mdl-menu__item" data-value=0x0200>HEVC Main10</li>
+            </ul>
+            <div id="codecVideoMenuTooltip" class="mdl-tooltip" for="codecVideoMenu">Video Codec</div>
+          </div>
+
+          <div class="nav-menu-parent">
             <label id="externalAudioBtn" class="mdl-icon-toggle mdl-js-icon-toggle mdl-js-ripple-effect" for="remoteAudioEnabledSwitch">
               <input type="checkbox" id="remoteAudioEnabledSwitch" class="mdl-icon-toggle__input">
               <i class="mdl-icon-toggle__label material-icons">volume_up</i>
@@ -140,6 +153,7 @@
       <div id="naclSpinner" class="mdl-progress mdl-js-progress mdl-progress__indeterminate">
         <h5 id="naclSpinnerMessage"></h5>
       </div>
+      <div id="modelCodePlaceholder"></div>
     </main>
   </div>
   <script defer src="static/js/jquery-2.2.0.min.js"></script>
@@ -153,6 +167,7 @@
   <script type="text/javascript" src="static/js/utils.js"></script>
   <script type="text/javascript" src="static/js/mdns-browser/dns.js"></script>
   <script type="text/javascript" src="static/js/mdns-browser/main.js"></script>
+  <script type="text/javascript" src="$WEBAPIS/webapis/webapis.js"></script>
   <dialog id="pairingDialog" class="mdl-dialog">
     <h3 class="mdl-dialog__title">Pairing</h3>
     <div class="mdl-dialog__content">

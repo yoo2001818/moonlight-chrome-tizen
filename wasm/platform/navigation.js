@@ -123,6 +123,7 @@ const Views = {
       'selectResolution',
       'selectFramerate',
       'bitrateField',
+      'selectCodecVideo',
       'externalAudioBtn',
       'optimizeGamesBtn',
       'framePacingBtn',

@@ -6,9 +6,20 @@ var api; // `api` should only be set if we're in a host-specific screen. on the 
 var isInGame = false; // flag indicating whether the game stream started
 var windowState = 'normal'; // chrome's windowState, possible values: 'normal' or 'fullscreen'
 var isDialogOpen = false; // track whether the dialog is open
+var model = null;
+var modelcode = null;
 
 let repeatInterval;
 let repeatTimeout;
+
+var modelCodePlaceholder = document.getElementById("modelCodePlaceholder");
+if (modelCodePlaceholder) {
+    model = webapis.productinfo.getModel();
+    modelcode = webapis.productinfo.getModelCode();
+    console.log("TV model: ", model);
+    console.log("TV modelcode: ", modelcode);
+    modelCodePlaceholder.innerText = "TV Model :" + (model ? model : "Not Available") + "    ;    ModelCode :" + (modelcode ? modelcode : "Not Available");
+}
 
 // Called by the common.js module.
 function attachListeners() {

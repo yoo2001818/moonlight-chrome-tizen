@@ -379,3 +379,8 @@ main {
     background-color: #404354;
     box-shadow: rgba(0, 163, 198, 1) 0px 0px 2px 4px;
 }
+#modelCodePlaceholder {
+  position: fixed;
+  bottom: 1cm;
+  left: 1cm;
+}
