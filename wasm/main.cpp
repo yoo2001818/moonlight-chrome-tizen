@@ -30,8 +30,7 @@
 MoonlightInstance* g_Instance;
 
 MoonlightInstance::MoonlightInstance()
-    : m_RequestIdrFrame(false),
-      m_OpusDecoder(NULL),
+    : m_OpusDecoder(NULL),
       m_MouseLocked(false),
       m_MouseLastPosX(-1),
       m_MouseLastPosY(-1),
@@ -146,6 +145,8 @@ void* MoonlightInstance::ConnectionThreadFunc(void* context) {
   serverInfo.address = me->m_Host.c_str();
   serverInfo.serverInfoAppVersion = me->m_AppVersion.c_str();
   serverInfo.serverInfoGfeVersion = me->m_GfeVersion.c_str();
+  serverInfo.rtspSessionUrl = me->m_RtspUrl.c_str();
+  serverInfo.serverCodecModeSupport = me->m_supportedVideoFormats; 
 
   err = LiStartConnection(&serverInfo, &me->m_StreamConfig,
   &MoonlightInstance::s_ClCallbacks, &MoonlightInstance::s_DrCallbacks,
@@ -175,8 +176,8 @@ static void HexStringToBytes(const char* str, char* output) {
 MessageResult MoonlightInstance::StartStream(
 std::string host, std::string width, std::string height, std::string fps,
 std::string bitrate, std::string rikey, std::string rikeyid,
-std::string appversion, std::string gfeversion, bool framePacing,
-bool audioSync, bool hdrEnabled) {
+std::string appversion, std::string gfeversion, std::string rtspurl, bool framePacing,
+bool audioSync, bool hdrEnabled, std::string codecVideo) {
   PostToJs("Setting stream width to: " + width);
   PostToJs("Setting stream height to: " + height);
   PostToJs("Setting stream fps to: " + fps);
@@ -186,9 +187,11 @@ bool audioSync, bool hdrEnabled) {
   PostToJs("Setting rikeyid to: " + rikeyid);
   PostToJs("Setting appversion to: " + appversion);
   PostToJs("Setting gfeversion to: " + gfeversion);
+  PostToJs("Setting RTSP url to: " + rtspurl);
   PostToJs("Setting frame pacing to: " + std::to_string(framePacing));
   PostToJs("Setting audio syncing to: " + std::to_string(audioSync));
   PostToJs("Setting HDR to:" + std::to_string(hdrEnabled));
+  PostToJs("Setting videoCodec: " + codecVideo);
 
   // Populate the stream configuration
   LiInitializeStreamConfiguration(&m_StreamConfig);
@@ -201,6 +204,7 @@ bool audioSync, bool hdrEnabled) {
   m_StreamConfig.packetSize = 1392;
   m_StreamConfig.supportsHevc = true;
   m_StreamConfig.enableHdr = hdrEnabled;
+  m_StreamConfig.supportedVideoFormats = stoi(codecVideo,0,16); 
 
   // Load the rikey and rikeyid into the stream configuration
   HexStringToBytes(rikey.c_str(), m_StreamConfig.remoteInputAesKey);
@@ -211,9 +215,12 @@ bool audioSync, bool hdrEnabled) {
   m_Host = host;
   m_AppVersion = appversion;
   m_GfeVersion = gfeversion;
+  m_RtspUrl = rtspurl;
   m_FramePacingEnabled = framePacing;
   m_AudioSyncEnabled = audioSync;
   m_HdrEnabled = hdrEnabled;
+  m_supportedVideoFormats = stoi(codecVideo,0,16);
+  
   // Initialize the rendering surface before starting the connection
   if (InitializeRenderingSurface(m_StreamConfig.width, m_StreamConfig.height)) {
     // Start the worker thread to establish the connection
@@ -310,11 +317,11 @@ int main(int argc, char** argv) {
 }
 MessageResult startStream(std::string host, std::string width,
 std::string height, std::string fps, std::string bitrate, std::string rikey,
-std::string rikeyid, std::string appversion, std::string gfeversion, bool framePacing,
-bool audioSync, bool hdrEnabled) {
+std::string rikeyid, std::string appversion, std::string gfeversion, std::string rtspurl, bool framePacing,
+bool audioSync, bool hdrEnabled, std::string codecVideo) {
   printf("%s host: %s w: %s h: %s\n", __func__, host.c_str(), width.c_str(), height.c_str());
   return g_Instance->StartStream(host, width, height, fps, bitrate, rikey,
-  rikeyid, appversion, gfeversion, framePacing, audioSync, hdrEnabled);
+  rikeyid, appversion, gfeversion, rtspurl, framePacing, audioSync, hdrEnabled, codecVideo);
 }
 
 MessageResult stopStream() { return g_Instance->StopStream(); }

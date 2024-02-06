@@ -127,7 +127,8 @@ const Views = {
       'optimizeGamesBtn',
       'framePacingBtn',
       'audioSyncBtn',
-      'hdrBtn']),
+      'hdrBtn',
+      'selectCodecVideo']),
     left: function() {
       this.view.prev();
     },
@@ -304,6 +305,35 @@ const Views = {
     enter: function() {},
     leave: function() {},
   },
+    SelectCodecVideoMenu: {
+    isActive: () => isPopupActive('codecVideoMenu'),
+    view: new ListView(
+        () => document
+            .getElementById('codecVideoMenu')
+            .parentNode
+            .children[1]
+            .children[1]
+            .children),
+    up: function() {
+      this.view.prev();
+    },
+    down: function() {
+      this.view.next();
+    },
+    accept: function() {
+      this.view.current().click();
+	  showRestartMoonlightDialog(); /* Show the dialog and push the view */
+    },
+    back: function() {
+      document.getElementById('selectCodecVideo').click();
+    },
+    enter: function() {
+      mark(this.view.current());
+    },
+    leave: function() {
+      unmark(this.view.current())
+    },
+  },
   PairingDialog: {
     view: new ListView(() => ['cancelPairingDialog']),
     accept: function() {
@@ -392,6 +422,34 @@ const Views = {
     },
     back: function() {
       document.getElementById('cancelQuitApp').click();
+    },
+    enter: function() {
+      mark(this.view.current());
+    },
+    leave: function() {
+      unmark(this.view.current());
+    },
+  },
+  RestartMoonlightDialog: {
+    isActive: () => isDialogActive('RestartMoonlightDialog'),
+    view: new ListView(() => [
+      'pressOK']),
+    left: function() {
+      this.view.prev();
+      document.getElementById(this.view.current()).focus();
+    },
+    right: function() {
+      this.view.next();
+      document.getElementById(this.view.current()).focus();
+    },
+    down: function() {
+      document.getElementById('pressOK').focus();
+    },
+    accept: function() {
+      document.getElementById(this.view.current()).click();
+    },
+    back: function() {
+      document.getElementById('pressOK').focus();
     },
     enter: function() {
       mark(this.view.current());
