@@ -12,13 +12,15 @@ var modelcode = null;
 let repeatInterval;
 let repeatTimeout;
 
-var modelCodePlaceholder = document.getElementById("modelCodePlaceholder");
-if (modelCodePlaceholder) {
-    model = webapis.productinfo.getModel();
-    modelcode = webapis.productinfo.getModelCode();
-    console.log("TV model: ", model);
-    console.log("TV modelcode: ", modelcode);
-    modelCodePlaceholder.innerText = "TV Model :" + (model ? model : "Not Available") + "    ;    ModelCode :" + (modelcode ? modelcode : "Not Available");
+function loadProductInfo() {
+  var modelCodePlaceholder = document.getElementById("modelCodePlaceholder");
+  if (modelCodePlaceholder) {
+      model = webapis.productinfo.getModel();
+      modelcode = webapis.productinfo.getModelCode();
+      console.log("TV model: ", model);
+      console.log("TV modelcode: ", modelcode);
+      modelCodePlaceholder.innerText = "TV Model :" + (model ? model : "Not Available") + "    ;    ModelCode :" + (modelcode ? modelcode : "Not Available");
+  }
 }
 
 // Called by the common.js module.
@@ -1540,6 +1542,7 @@ function onWindowLoad() {
   initSamsungKeys();
   loadWindowState();
   loadUserData();
+  loadProductInfo();
 }
 
 window.onload = onWindowLoad;

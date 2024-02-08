@@ -128,8 +128,7 @@ const Views = {
       'optimizeGamesBtn',
       'framePacingBtn',
       'audioSyncBtn',
-      'hdrBtn',
-      'selectCodecVideo']),
+      'hdrBtn']),
     left: function() {
       this.view.prev();
     },
