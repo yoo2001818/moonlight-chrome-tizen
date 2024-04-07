@@ -167,9 +167,9 @@ int height, int redrawRate, void* context, int drFlags) {
     } else if(videoFormat & VIDEO_FORMAT_H264) {
       mimetype = "video/mp4; codecs=\"avc1.64002A\"";  // h264 High Profile 4.2 mimeType
     } else if (videoFormat & VIDEO_FORMAT_AV1_MAIN8) {
-      mimetype = "video/mp4; codecs=\"av01.0.13M.08\"";  // AV1 Main Profile, level 2.0, Main tier, 8 bits
+      mimetype = "video/mp4; codecs=\"av01.0.13M.08\"";  // AV1 Main Profile, level 5.1, Main tier, 8 bits
     } else if (videoFormat & VIDEO_FORMAT_AV1_MAIN10) {
-      mimetype = "video/mp4; codecs=\"av01.0.13M.10\"";  // AV1 Main Profile, level 2.0, Main tier, 10 bits
+      mimetype = "video/mp4; codecs=\"av01.0.13M.10\"";  // AV1 Main Profile, level 5.1, Main tier, 10 bits
     }
     else {
       ClLogMessage("Cannot select mime type for videoFormat=0x%x\n", videoFormat);
