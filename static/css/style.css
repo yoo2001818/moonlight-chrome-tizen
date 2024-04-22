@@ -13,15 +13,16 @@ body {
 }
 span.mdl-layout-title {
     font-weight: 300;
-    font-size: 24px;
+    font-size: 30px;
 }
 span.mdl-layout-title > span {
     font-weight: 900;
-    font-size: 24px;
-    color: #00A3C6;
+    font-size: 30px;
+    color: #00A3C6;r
 }
 .mdl-layout__header-row {
     padding: 0 80px 0 80px;
+    background-color: #363b4a
 }
 main {
     padding: 0 80px 0 80px;
@@ -101,7 +102,7 @@ main {
 .mdl-cell {
     text-align: center;
     color:#fff;
-    padding:25px;
+    padding: 25px;
 }
 #backIcon {
     position: fixed;
@@ -122,13 +123,14 @@ main {
 }
 .mdl-dialog__content {
     padding: 20px 24px 14px 24px;
-    color: rgba(255, 255, 255, 0.90);
+    color: rgba(255, 255, 255, 1);
 }
 .mdl-dialog__actions button {
     width: 100%;
 }
 .mdl-textfield__input {
     width: 152%;
+
     border-bottom: 1px solid rgba(255, 255, 255, 0.90);
 }
 .mdl-textfield__label {
@@ -168,8 +170,8 @@ main {
     min-width:0px;
 }
 #host-grid, #game-grid {
-    padding: 0;
-    margin: 0;
+    padding: 0 ;
+    margin: 50px 0 0 0;
     flex: 1;
     display: flex;
     flex-flow: row wrap;
@@ -188,14 +190,15 @@ main {
     width: 170px;
     height: 170px;
     min-height: 170px;
-    margin: 15px;
+    margin: 20px 20px;
     cursor: pointer;
     transition: all .2s ease-in-out;
     will-change: transform;
+
 }
 #host-grid .mdl-card:hover, #host-grid .mdl-card:focus, #host-grid .mdl-card:active, #game-grid .mdl-card:focus, #game-grid .mdl-card:active {
-    transform: scale(1.1);
-    outline-color: #00A3C6;
+    outline: #00A3C6 solid 2px; 
+    transform: scale(1.2);
 }
 #host-grid .mdl-card__title {
     padding: 0;
@@ -245,11 +248,11 @@ main {
 }
 .mdl-card.hovered {
     background-color: initial;
-    transform: scale(1.1);
-    outline-color: #00A3C6;
+    outline: #00A3C6 solid 2px; 
+    transform: scale(1.2);
 }
 .hovered {
-    background-color: rgba(158,158,158,.2);
+    background-color: rgba(158,158,158,0.2);
 }
 #host-grid p {
     margin: 0;
@@ -312,10 +315,10 @@ main {
     border: none !important;
 }
 .current-game {
-    outline: auto #8BC34A;
+    outline: solid #8BC34A 2px;
 }
 .host-cell-inactive {
-    outline: auto #F44336;
+    outline: solid #F44336 2px;
 }
 .host-cell:hover {
     cursor: pointer;
@@ -383,4 +386,5 @@ main {
   position: fixed;
   bottom: 1cm;
   left: 1cm;
+  font-size : 12px;
 }
