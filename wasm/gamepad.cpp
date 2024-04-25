@@ -4,12 +4,15 @@
 #include <array>
 #include <utility>
 #include <sstream>
+#include <chrono>
+#include <thread>
 
 #include <Limelight.h>
 #include <emscripten/emscripten.h>
 
 // Define a combination of buttons on the Xbox controller to stop streaming
 const short STOP_STREAM_BUTTONS_FLAGS = LB_FLAG | RB_FLAG | BACK_FLAG | PLAY_FLAG;
+bool isMouseEmulationActive = false;
 
 // For explanation on ordering, see: https://www.w3.org/TR/gamepad/#remapping
 // Enumeration for gamepad axes
@@ -31,6 +34,13 @@ enum GamepadButton {
   Special,
   Count,
 };
+
+// Function to handle mouse click for the mouse emulation mode.
+void handleMouseClick(int button) {
+  LiSendMouseButtonEvent(BUTTON_ACTION_PRESS, button);
+  LiSendMouseButtonEvent(BUTTON_ACTION_RELEASE, button);
+  std::this_thread::sleep_for(std::chrono::milliseconds(100)); // Sleep for 100ms to avoid unwanted presses. 
+}
 
 // Function to create a mask for active gamepads
 static short GetActiveGamepadMask(int numGamepads) {
@@ -114,15 +124,47 @@ void MoonlightInstance::PollGamepads() {
       return;
     }
 
-    // Send gamepad input to the desired handler
+    static auto startPressTime = std::chrono::steady_clock::now();
+
+    if (buttonFlags & PLAY_FLAG) {
+      auto currentTime = std::chrono::steady_clock::now();
+      auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(currentTime - startPressTime).count();
+      if (duration >= 1000) { // Adjust this value to change how long start needs to be pressed 
+        if (!isMouseEmulationActive) {
+          isMouseEmulationActive = true;
+          PostToJs("mouseEmulation enabled");
+        } else {
+          isMouseEmulationActive = false;
+          PostToJs("mouseEmulation disabled");
+        }
+        startPressTime = std::chrono::steady_clock::now();
+      }
+    } else {
+      startPressTime = std::chrono::steady_clock::now();
+    }
+
+    // If mouse emulation is on, left stick values are used with LiSendMouseMoveEvent
+    if (isMouseEmulationActive) {
+      const float mouseSpeed = 8.0f; // Adjust this to change mouse sensitivity.
+      const float mouseXDelta = static_cast<float>(leftStickX) / std::numeric_limits<short>::max() * mouseSpeed;
+      const float mouseYDelta = -static_cast<float>(leftStickY) / std::numeric_limits<short>::max() * mouseSpeed;
+
+      LiSendMouseMoveEvent(static_cast<int>(mouseXDelta), static_cast<int>(mouseYDelta));
+
+      if (buttonFlags & (A_FLAG | LB_FLAG)) {
+        handleMouseClick(BUTTON_LEFT);
+      } else if (buttonFlags & (B_FLAG | RB_FLAG)) {
+        handleMouseClick(BUTTON_RIGHT);
+      }
+    } else { // send gamepad input to the desired handler (act as a normal gamepad)
     LiSendMultiControllerEvent(
       gamepadID, activeGamepadMask, buttonFlags, leftTrigger,
       rightTrigger, leftStickX, leftStickY, rightStickX, rightStickY);
+    }
   }
 }
 
-void MoonlightInstance::ClControllerRumble(unsigned short controllerNumber, unsigned short lowFreqMotor, unsigned short highFreqMotor)
-{
+void MoonlightInstance::ClControllerRumble(unsigned short controllerNumber, unsigned short lowFreqMotor, unsigned short highFreqMotor) {
     const float weakMagnitude = static_cast<float>(highFreqMotor) / static_cast<float>(UINT16_MAX);
     const float strongMagnitude = static_cast<float>(lowFreqMotor) / static_cast<float>(UINT16_MAX);
 

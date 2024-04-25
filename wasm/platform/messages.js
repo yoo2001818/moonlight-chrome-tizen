@@ -104,6 +104,10 @@ function handleMessage(msg) {
     snackbarLogLong(msg.replace('DialogMsg: ', ''));
   } else if (msg === 'displayVideo') {
     $("#listener").addClass("fullscreen");
+  } else if (msg.indexOf('mouseEmulation enabled') === 0) {
+    snackbarLogLong("Mouse Emulation is now enabled");
+  } else if (msg.indexOf('mouseEmulation disabled') === 0) {
+    snackbarLogLong("Mouse Emulation is now disabled");
   } else if (msg.indexOf('controllerRumble: ') === 0) {
 	  const eventData = msg.split(' ')[1].split(',');
 	  const gamepadIdx = parseInt(eventData[0]);
