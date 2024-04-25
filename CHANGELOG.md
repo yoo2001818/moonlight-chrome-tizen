@@ -9,7 +9,7 @@ All notable changes to this project will be documented in this file.
   LB/RB and A/B act as left/right
   No scroll/middle click for now.
 - Fallback to best possible codec if selected codec is not available on the host (thanks @henryfa2)
-- You can now support the project using the BuyMeACoffe link on the Github page. 
+- You can now support the project using the BuyMeACoffee link on the Github page. 
 
 ### Changed
 
