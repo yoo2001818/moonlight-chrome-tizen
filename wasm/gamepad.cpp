@@ -6,6 +6,7 @@
 #include <sstream>
 #include <chrono>
 #include <thread>
+#include <cmath>
 
 #include <Limelight.h>
 #include <emscripten/emscripten.h>
@@ -143,28 +144,47 @@ void MoonlightInstance::PollGamepads() {
 
     // If mouse emulation is on, left stick values are used with LiSendMouseMoveEvent
     if (isMouseEmulationActive) {
-      const float mouseSpeed = 8.0f; // Adjust this to change mouse sensitivity.
-      const float mouseXDelta = static_cast<float>(leftStickX) / std::numeric_limits<short>::max() * mouseSpeed;
-      const float mouseYDelta = -static_cast<float>(leftStickY) / std::numeric_limits<short>::max() * mouseSpeed;
+        const float baseMouseSpeed = 10.0f;
+        const float stickMagnitude = std::sqrt(leftStickX * leftStickX + leftStickY * leftStickY) / std::numeric_limits<short>::max();
+        const float mouseSpeed = baseMouseSpeed * stickMagnitude; // Mouse speed increases when the stick is further from the center 
 
-      LiSendMouseMoveEvent(static_cast<int>(mouseXDelta), static_cast<int>(mouseYDelta));
+        const float mouseXDelta = static_cast<float>(leftStickX) / std::numeric_limits<short>::max() * mouseSpeed;
+        const float mouseYDelta = -static_cast<float>(leftStickY) / std::numeric_limits<short>::max() * mouseSpeed;
 
-      if (buttonFlags & (A_FLAG | LB_FLAG)) {
-          handleMouseClick(BUTTON_ACTION_PRESS, BUTTON_LEFT);
+        LiSendMouseMoveEvent(static_cast<int>(mouseXDelta), static_cast<int>(mouseYDelta));
+
+        // Right Stick Y is used for scrolling
+        const float baseScrollSpeed = 1.0f;
+        const float rightStickMagnitude = std::sqrt(rightStickX * rightStickX + rightStickY * rightStickY) / std::numeric_limits<short>::max();
+        const float scrollSpeed = baseScrollSpeed * rightStickMagnitude;
+        const float scrollDelta = static_cast<float>(rightStickY) / std::numeric_limits<short>::max() * scrollSpeed;
+
+        LiSendScrollEvent(static_cast<int>(scrollDelta));
+
+        // Buttons are mapped to mouse clicks 
+
+        if (buttonFlags & (A_FLAG | LB_FLAG)) {
+            handleMouseClick(BUTTON_ACTION_PRESS, BUTTON_LEFT);
         } else {
-        handleMouseClick(BUTTON_ACTION_RELEASE, BUTTON_LEFT);
+            handleMouseClick(BUTTON_ACTION_RELEASE, BUTTON_LEFT);
         }
 
-      if (buttonFlags & (B_FLAG | RB_FLAG)) {
-          handleMouseClick(BUTTON_ACTION_PRESS,BUTTON_RIGHT);
+        if (buttonFlags & (B_FLAG | RB_FLAG)) {
+            handleMouseClick(BUTTON_ACTION_PRESS, BUTTON_RIGHT);
         } else {
-        handleMouseClick(BUTTON_ACTION_RELEASE, BUTTON_RIGHT);
+            handleMouseClick(BUTTON_ACTION_RELEASE, BUTTON_RIGHT);
         }
 
-    } else { // send gamepad input to the desired handler (act as a normal gamepad)
-    LiSendMultiControllerEvent(
-      gamepadID, activeGamepadMask, buttonFlags, leftTrigger,
-      rightTrigger, leftStickX, leftStickY, rightStickX, rightStickY);
+        if (buttonFlags & RS_CLK_FLAG) {
+            handleMouseClick(BUTTON_ACTION_PRESS, BUTTON_MIDDLE);
+        } else {
+            handleMouseClick(BUTTON_ACTION_RELEASE, BUTTON_MIDDLE);
+        }
+
+    } else { // Send gamepad input to the desired handler (act as a normal gamepad)
+        LiSendMultiControllerEvent(
+            gamepadID, activeGamepadMask, buttonFlags, leftTrigger,
+            rightTrigger, leftStickX, leftStickY, rightStickX, rightStickY);
     }
   }
 }
