@@ -52,6 +52,17 @@ To update Moonlight:
 1. Delete the existing app from your TV.
 2. Follow the installation instructions to install the latest version.
 
+## Usage
+While in the session, you can use the following features on the gamepad:
+- Press LB + RB + Start + Select to end stream.
+- Press Start + Select to press Menu button on the PC.
+- Hold Start for 1 second to toggle mouse emulation.
+  - Use left stick to control the mouse cursor.
+  - Use right stick to control the mouse wheel.
+  - Press A or LB to left click.
+  - Press B or RB to right click.
+  - Press right stick to middle click.
+
 ## Changelogs
 View changes and updates in the [CHANGELOG](https://github.com/oneliberty/moonlight-chrome-tizen/blob/samsung_wasm/CHANGELOG.md).
 

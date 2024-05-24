@@ -13,6 +13,7 @@
 
 // Define a combination of buttons on the Xbox controller to stop streaming
 const short STOP_STREAM_BUTTONS_FLAGS = LB_FLAG | RB_FLAG | BACK_FLAG | PLAY_FLAG;
+const short MENU_BUTTONS_FLAGS = BACK_FLAG | PLAY_FLAG;
 bool isMouseEmulationActive = false;
 
 // For explanation on ordering, see: https://www.w3.org/TR/gamepad/#remapping
@@ -121,6 +122,10 @@ void MoonlightInstance::PollGamepads() {
       PostToJs(std::string("stopping stream, button flags is ") + std::to_string(buttonFlags));
       stopStream();
       return;
+    }
+
+    if (buttonFlags == MENU_BUTTONS_FLAGS) {
+      buttonFlags = SPECIAL_FLAG;
     }
 
     static auto startPressTime = std::chrono::steady_clock::now();
